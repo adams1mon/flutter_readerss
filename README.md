@@ -1,8 +1,9 @@
 # flutter_readrss
+University Flutter group project 
 
-A new Flutter project.
 
 ## Getting Started
+A new Flutter project.
 
 This project is a starting point for a Flutter application.
 
