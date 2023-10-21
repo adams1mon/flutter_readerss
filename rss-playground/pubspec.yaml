@@ -1,0 +1,8 @@
+name: rss_test
+
+environment:
+  sdk: '^3.0.0'
+
+dependencies:
+  http: ^1.1.0
+  webfeed: ^0.7.0

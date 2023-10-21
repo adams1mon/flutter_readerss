@@ -1,0 +1,1 @@
+run: `dart pub get && dart run main.dart`
