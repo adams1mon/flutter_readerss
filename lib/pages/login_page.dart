@@ -210,7 +210,7 @@ class _FormInputContainerState extends State<FormInputContainer> {
             constraints: BoxConstraints(maxWidth: 340),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.all(
-                Radius.circular(BORDER_RADIUS),
+                Radius.circular(borderRadius),
               ),
             ),
           ),
@@ -231,7 +231,7 @@ class _FormInputContainerState extends State<FormInputContainer> {
             constraints: BoxConstraints(maxWidth: 340),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.all(
-                Radius.circular(BORDER_RADIUS),
+                Radius.circular(borderRadius),
               ),
             ),
           ),
