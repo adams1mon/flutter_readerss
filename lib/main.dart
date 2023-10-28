@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_readrss/model/feed_item.dart';
 import 'package:flutter_readrss/pages/feed_page.dart';
-import 'package:flutter_readrss/pages/login_page.dart';
 import 'package:flutter_readrss/styles/styles.dart';
 
 void main() {
