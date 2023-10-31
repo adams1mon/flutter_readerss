@@ -97,9 +97,7 @@ class LoginFormState extends State<LoginForm> {
   }
 
   onGuestLoginPressed() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Guest Data')),
-    );
+    Navigator.pushReplacementNamed(context, '/guestfeed');
   }
 
   @override

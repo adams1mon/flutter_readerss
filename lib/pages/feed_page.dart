@@ -16,6 +16,7 @@ class FeedPage extends StatelessWidget {
         userAvatar: UserAvatar(
           image: Image.asset("assets/avatar.jpg"),
         ),
+        context: context,
       ),
       backgroundColor: colors(context).background,
       body: const MainContainer(),
