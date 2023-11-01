@@ -97,9 +97,7 @@ class LoginFormState extends State<LoginForm> {
   }
 
   onGuestLoginPressed() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Guest Data')),
-    );
+    Navigator.pushReplacementNamed(context, '/guestfeed');
   }
 
   @override
@@ -210,7 +208,7 @@ class _FormInputContainerState extends State<FormInputContainer> {
             constraints: BoxConstraints(maxWidth: 340),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.all(
-                Radius.circular(BORDER_RADIUS),
+                Radius.circular(borderRadius),
               ),
             ),
           ),
@@ -231,7 +229,7 @@ class _FormInputContainerState extends State<FormInputContainer> {
             constraints: BoxConstraints(maxWidth: 340),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.all(
-                Radius.circular(BORDER_RADIUS),
+                Radius.circular(borderRadius),
               ),
             ),
           ),
