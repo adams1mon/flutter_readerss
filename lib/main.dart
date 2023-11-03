@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_readrss/pages/feed_page.dart';
+import 'package:flutter_readrss/const/screen_route.dart';
+import 'package:flutter_readrss/pages/container_page.dart';
 import 'package:flutter_readrss/pages/login_page.dart';
-import 'package:flutter_readrss/pages/settings_page.dart';
 import 'package:flutter_readrss/styles/styles.dart';
 
 void main() {
@@ -14,13 +14,14 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-        title: 'Flutter Demo',
+        title: 'ReadRss',
         theme: globalTheme,
-        initialRoute: '/',
+        initialRoute: ScreenRoute.login.route,
         routes: {
-          '/': (context) => const LoginPage(),
-          '/guestfeed': (context) => const FeedPage(),
-          '/settings': (context) => const SettingsPage(),
+          ScreenRoute.login.route: (context) => const LoginPage(),
+          ScreenRoute.main.route: (context) => const ContainerPage(),
+          // TODO: create the user account page ? 
+          ScreenRoute.user.route: (context) => const Text("User account page here"),
         });
   }
 }
