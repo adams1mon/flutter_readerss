@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_readrss/const/screen_route.dart';
 import 'package:flutter_readrss/styles/styles.dart';
 
 class LoginPage extends StatelessWidget {
@@ -6,9 +7,13 @@ class LoginPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: colors(context).background,
-      body: const MainContainer(),
+    // TODO: decide if safearea is good here 
+    // TODO: (looks funky, but we could have white notification icons on white ???)
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: colors(context).background,
+        body: const MainContainer(),
+      ),
     );
   }
 }
@@ -96,8 +101,9 @@ class LoginFormState extends State<LoginForm> {
     }
   }
 
+  // TODO: set guest login state here
   onGuestLoginPressed() {
-    Navigator.pushReplacementNamed(context, '/guestfeed');
+    Navigator.pushReplacementNamed(context, ScreenRoute.main.route);
   }
 
   @override

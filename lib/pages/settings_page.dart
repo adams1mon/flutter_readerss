@@ -1,8 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_readrss/components/app_bar.dart';
 import 'package:flutter_readrss/components/avatars.dart';
+import 'package:flutter_readrss/const/screen_page.dart';
+import 'package:flutter_readrss/const/screen_route.dart';
+import 'package:provider/provider.dart';
+
+import '../components/bottom_navbar.dart';
+import 'container_page.dart';
 
 class SettingsPage extends StatefulWidget {
-  const SettingsPage({super.key});
+  const SettingsPage({
+    super.key,
+  });
 
   @override
   State<StatefulWidget> createState() {
@@ -41,14 +50,22 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   void _navigateToGuestFeed(BuildContext context) {
-    Navigator.pushReplacementNamed(context, '/guestfeed');
+    Navigator.pushReplacementNamed(context, ScreenRoute.main.route);
   }
 
   @override
   Widget build(BuildContext context) {
+    final navbarNotifier = Provider.of<ReadrssBottomNavbarNotifier>(context);
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Settings Page'),
+      appBar: ReadrssAppBar(
+        title: ScreenPage.settings.title,
+        context: context,
+      ),
+      bottomNavigationBar: ReadrssBottomNavbar(
+        currentIndex: navbarNotifier.pageIndex,
+        onTap: navbarNotifier.changePage,
+        context: context,
       ),
       body: Column(
         children: <Widget>[

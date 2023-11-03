@@ -1,38 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_readrss/components/app_bar.dart';
-import 'package:flutter_readrss/components/avatars.dart';
+import 'package:flutter_readrss/components/bottom_navbar.dart';
 import 'package:flutter_readrss/components/feed_card.dart';
 import 'package:flutter_readrss/model/feed_item.dart';
+import 'package:flutter_readrss/pages/container_page.dart';
 import 'package:flutter_readrss/styles/styles.dart';
+import 'package:provider/provider.dart';
 
 class FeedPage extends StatelessWidget {
-  const FeedPage({super.key});
+  const FeedPage({
+    super.key,
+    required this.title,
+  });
+
+  final String title;
 
   @override
   Widget build(BuildContext context) {
+    final navbarNotifier = Provider.of<ReadrssBottomNavbarNotifier>(context);
+
     return Scaffold(
       appBar: ReadrssAppBar(
-        title: "Main Feed",
-        userAvatar: UserAvatar(
-          image: Image.asset("assets/avatar.jpg"),
-        ),
+        title: title,
+        context: context,
+      ),
+      bottomNavigationBar: ReadrssBottomNavbar(
+        currentIndex: navbarNotifier.pageIndex,
+        onTap: navbarNotifier.changePage,
         context: context,
       ),
       backgroundColor: colors(context).background,
-      body: const MainContainer(),
-    );
-  }
-}
-
-class MainContainer extends StatelessWidget {
-  const MainContainer({
-    super.key,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(
-      child: FeedList(),
+      body: const Center(
+        child: FeedList(),
+      ),
     );
   }
 }
