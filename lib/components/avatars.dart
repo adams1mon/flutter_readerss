@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_readrss/styles/styles.dart';
 
+// TODO: set default image so it doesn't break
 class Avatar extends StatelessWidget {
   const Avatar({super.key, required image, width = 40.0})
       : _image = image,

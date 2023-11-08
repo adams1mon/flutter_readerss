@@ -17,6 +17,7 @@ class FeedPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
     final navbarNotifier = Provider.of<ReadrssBottomNavbarNotifier>(context);
 
     return Scaffold(

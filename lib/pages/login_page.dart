@@ -7,13 +7,9 @@ class LoginPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // TODO: decide if safearea is good here 
-    // TODO: (looks funky, but we could have white notification icons on white ???)
-    return SafeArea(
-      child: Scaffold(
-        backgroundColor: colors(context).background,
-        body: const MainContainer(),
-      ),
+    return Scaffold(
+      backgroundColor: colors(context).background,
+      body: const MainContainer(),
     );
   }
 }
@@ -27,7 +23,6 @@ class MainContainer extends StatelessWidget {
   Widget build(BuildContext context) {
     return const Center(
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Expanded(
             child: SingleChildScrollView(
