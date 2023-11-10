@@ -13,7 +13,8 @@ TextTheme textTheme(BuildContext context) {
   return Theme.of(context).textTheme;
 }
 
-const defaultFeedIcon = "assets/avatar.jpg";
+final defaultFeedImage = Image.asset("assets/newspaper.png");
+
 const borderRadius = 10.0;
 const userAvatarWidth = 40.0;
 const feedAvatarWidth = 50.0;

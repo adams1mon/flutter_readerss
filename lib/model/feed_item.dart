@@ -32,5 +32,5 @@ class FeedItem {
     this.pubDate,
     required this.views,
     required this.likes,
-  }) : sourceIcon = sourceIcon ?? Image.asset(defaultFeedIcon);
+  }) : sourceIcon = sourceIcon ?? defaultFeedImage;
 }
