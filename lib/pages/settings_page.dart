@@ -1,28 +1,33 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_readrss/components/app_bar.dart';
 import 'package:flutter_readrss/components/avatars.dart';
 import 'package:flutter_readrss/const/screen_page.dart';
 import 'package:flutter_readrss/model/feed_source.dart';
+import 'package:flutter_readrss/styles/styles.dart';
 import 'package:provider/provider.dart';
+import 'package:http/http.dart' as http;
+import 'package:webfeed/domain/rss_feed.dart';
 
 import '../components/bottom_navbar.dart';
 import 'container_page.dart';
 
 class FeedSourceListNotifier extends ChangeNotifier {
-  final _items = <FeedSource>[];
+  final _sources = <FeedSource>[];
 
-  get items => List.unmodifiable(_items);
+  get sources => List.unmodifiable(_sources);
 
-  void addItem(FeedSource source) {
-    _items.add(source);
+  void addSource(FeedSource source) {
+    _sources.add(source);
     notifyListeners();
   }
 
-  void removeItem(int index) {
-    if (index < 0 && index >= _items.length) {
+  void removeSource(int index) {
+    if (index < 0 && index >= _sources.length) {
       return;
     }
-    _items.removeAt(index);
+    _sources.removeAt(index);
     notifyListeners();
   }
 }
@@ -52,7 +57,9 @@ class SettingsPage extends StatelessWidget {
           body: const Column(
             children: <Widget>[
               FeedSourceListTitle(),
-              Expanded(child: FeedSourceList(),),
+              Expanded(
+                child: FeedSourceList(),
+              ),
             ],
           ),
           floatingActionButton: FloatingActionButton(
@@ -62,7 +69,10 @@ class SettingsPage extends StatelessWidget {
                 builder: (BuildContext context) {
                   return Center(
                     child: SingleChildScrollView(
-                      child: AddFeedSourceDialog(feedSourceNotifier: Provider.of<FeedSourceListNotifier>(consumerContext)),
+                      child: AddFeedSourceDialog(
+                          feedSourceNotifier:
+                              Provider.of<FeedSourceListNotifier>(
+                                  consumerContext)),
                     ),
                   );
                 },
@@ -89,18 +99,56 @@ class AddFeedSourceDialog extends StatefulWidget {
 }
 
 class _AddFeedSourceDialogState extends State<AddFeedSourceDialog> {
-  final TextEditingController _newItemController = TextEditingController();
+  final TextEditingController _textController = TextEditingController();
+
+  // var loading = false;
+  String? feedSourceError;
+
+  void clearFeedSourceError() {
+    setState(() => feedSourceError = null);
+  }
+
+  void setFeedSourceError(String error) {
+    setState(() {
+      feedSourceError = error;
+      // loading = true;
+    });
+  }
+
+  // void setLoading() {
+  //   setState(() => loading = true);
+  // }
+
+  // void clearLoading() {
+  //   setState(() => loading = false);
+  // }
 
   @override
   Widget build(BuildContext context) {
-
     return AlertDialog(
       title: const Text('Add New Feed Source'),
-      content: TextField(
-        controller: _newItemController,
-        decoration:
-            const InputDecoration(hintText: 'Paste the URL of the feed: '),
+      content:
+          // loading
+          // ?
+          // const Column(
+          //     children: [
+          //       Text("Loading..."),
+          //       CircularProgressIndicator.adaptive(),
+          //     ],
+          //   )
+          // :
+          TextField(
+        controller: _textController,
+        decoration: InputDecoration(
+          hintText: 'Paste the URL of the feed: ',
+          errorText: feedSourceError,
+        ),
       ),
+      // content: FutureBuilder(
+      //   future: Future<void>(() {}),
+      //   builder: (context, snapshot) => {
+      //     if (snapshot.)
+      // },),
       actions: <Widget>[
         TextButton(
           child: const Text('Cancel'),
@@ -111,13 +159,45 @@ class _AddFeedSourceDialogState extends State<AddFeedSourceDialog> {
         TextButton(
           child: const Text('Add'),
           onPressed: () {
+            // setLoading();
 
             // TODO: check if feed url is valid
-            var url = _newItemController.value.text;
-            var feedSource = FeedSource(title: "blah", link: url);
-            widget.feedSourceNotifier.addItem(feedSource);
+            var url = _textController.text;
+            // var feedSource = FeedSource(title: "blah", link: url);
+            // widget.feedSourceNotifier.addSource(feedSource);
 
-            Navigator.of(context).pop();
+            log('trying to parse $url');
+
+            var uri = Uri.tryParse(url);
+            if (uri == null) {
+              log('invalid url $url, uri: $uri');
+              setFeedSourceError("Invalid URI");
+              return;
+            }
+
+            http.get(uri).then(
+              (res) {
+                log('trying to parse rss feed');
+                final feed = RssFeed.parse(res.body);
+
+                if (feed.title == null) {
+                  log('to title field found in the feed');
+                  setFeedSourceError("No 'title' field found in the feed");
+                  return;
+                }
+                final feedSource = FeedSource(link: url, title: feed.title!);
+                widget.feedSourceNotifier.addSource(feedSource);
+
+                // TODO: add the feed items too
+
+                // clearLoading();
+                Navigator.of(context).pop();
+              },
+              onError: (err) {
+                log('an error occurred: $err');
+                setFeedSourceError("An unknown error occurred");
+              },
+            );
           },
         ),
       ],
@@ -152,16 +232,24 @@ class FeedSourceList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     var feedSourceNotifier = Provider.of<FeedSourceListNotifier>(context);
 
+    if (feedSourceNotifier.sources.length == 0) {
+      return Center(
+        child: Text(
+          "It seems like there are no feeds. Try to add some!",
+          style: textTheme(context).bodyLarge,
+        ),
+      );
+    }
+
     return ListView.builder(
-      itemCount: feedSourceNotifier.items.length,
+      itemCount: feedSourceNotifier.sources.length,
       itemBuilder: (context, index) {
-        var item = feedSourceNotifier.items[index];
+        var item = feedSourceNotifier.sources[index];
         return FeedSourceListTile(
           feedSource: item,
-          removeItem: () => feedSourceNotifier.removeItem(index),
+          removeItem: () => feedSourceNotifier.removeSource(index),
         );
       },
     );
