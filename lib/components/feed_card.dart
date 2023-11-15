@@ -168,6 +168,20 @@ class FeedCardBody extends StatelessWidget {
               child: FeedCardBodyExpandedSection(
                   feedItem: feedItem, liked: liked, toggleLiked: toggleLiked),
             ),
+          if (feedItem.pubDate != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 8.0),
+              child: Row(
+                children: [
+                  Text(
+                    feedItem.getDate(),
+                    style: textTheme(context)
+                        .bodySmall
+                        ?.copyWith(color: colors(context).secondary),
+                  ),
+                ],
+              ),
+            ),
         ],
       ),
     );

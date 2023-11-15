@@ -7,47 +7,14 @@ import 'package:flutter_readrss/const/screen_page.dart';
 import 'package:flutter_readrss/model/feed_item.dart';
 import 'package:flutter_readrss/model/feed_source.dart';
 import 'package:flutter_readrss/styles/styles.dart';
+import 'package:flutter_readrss/viewmodels/feed_items_notifier.dart';
+import 'package:flutter_readrss/viewmodels/feed_source_notifier.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import 'package:webfeed/domain/rss_feed.dart';
 
 import '../components/bottom_navbar.dart';
 import 'container_page.dart';
-
-class FeedSourceNotifier extends ChangeNotifier {
-  final _sources = <FeedSource>{};
-
-  List<FeedSource> getSources() {
-    return List.unmodifiable(_sources);
-  }
-
-  void addSource(FeedSource source) {
-    // check that there are no sources
-    // (the set doesn't work properly because of the 'image' property is always new?)
-    if (!_sources.any((element) => element.equals(source))) {
-      _sources.add(source);
-      notifyListeners();
-    }
-  }
-
-  void removeSource(FeedSource source) {
-    _sources.remove(source);
-    notifyListeners();
-  }
-}
-
-class FeedItemsNotifier extends ChangeNotifier {
-  final _items = <FeedItem>{};
-
-  List<FeedItem> getItems() {
-    return List.unmodifiable(_items);
-  }
-
-  void addItem(FeedItem item) {
-    _items.add(item);
-    notifyListeners();
-  }
-}
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({
@@ -87,8 +54,11 @@ class SettingsPage extends StatelessWidget {
                   return Center(
                     child: SingleChildScrollView(
                       child: AddFeedSourceDialog(
-                          feedSourceNotifier:
-                              Provider.of<FeedSourceNotifier>(consumerContext)),
+                        feedSourceNotifier:
+                            Provider.of<FeedSourceNotifier>(consumerContext),
+                        feedItemsNotifier:
+                            Provider.of<FeedItemsNotifier>(consumerContext),
+                      ),
                     ),
                   );
                 },
@@ -106,9 +76,11 @@ class AddFeedSourceDialog extends StatefulWidget {
   const AddFeedSourceDialog({
     super.key,
     required this.feedSourceNotifier,
+    required this.feedItemsNotifier,
   });
 
   final FeedSourceNotifier feedSourceNotifier;
+  final FeedItemsNotifier feedItemsNotifier;
 
   @override
   State<AddFeedSourceDialog> createState() => _AddFeedSourceDialogState();
@@ -155,6 +127,8 @@ class _AddFeedSourceDialogState extends State<AddFeedSourceDialog> {
     http.get(uri).then(
       (res) {
         log('trying to parse rss feed');
+
+        // TODO: handle exceptions if anything fails here or below
         final feed = RssFeed.parse(res.body);
 
         if (feed.title == null) {
@@ -176,8 +150,31 @@ class _AddFeedSourceDialogState extends State<AddFeedSourceDialog> {
 
         // TODO: add the feed items too
 
+        if (feed.items != null) {
+          final feedItems = feed.items!
+              .where((rssItem) => rssItem.title != null && rssItem.link != null)
+              .map((rssItem) {
+                // TODO: fetch views, likes and if the user liked the feed item from the backend
+                return FeedItem(
+                  feedSourceTitle: feedSource.title,
+                  title: rssItem.title!,
+                  views: 42, // TODO: fetch this
+                  likes: 42, // TODO: fetch this
+                  liked: false, // TODO: fetch this
+                  description: rssItem.description,
+                  link: rssItem.link!,
+                  sourceIcon: feedSource.image,
+                  pubDate: rssItem.pubDate,
+                );
+              })
+              .toList();
+
+          widget.feedItemsNotifier.addItems(feedItems);
+        }
+
         clearLoading();
         Navigator.of(context).pop();
+
       },
       onError: (err) {
         log('an error occurred: $err');
@@ -337,7 +334,10 @@ class _FeedSourceListTileState extends State<FeedSourceListTile> {
                           onPressed: () => Navigator.of(context).pop(),
                         ),
                         TextButton(
-                          onPressed: widget.removeItem,
+                          onPressed: () {
+                            widget.removeItem();
+                            Navigator.of(context).pop();
+                          },
                           child: Text(
                             'Delete',
                             style: TextStyle(color: colors(context).error),
