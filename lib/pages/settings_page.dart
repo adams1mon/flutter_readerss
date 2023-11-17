@@ -1,13 +1,13 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_readrss/bloc/feed_items_bloc.dart';
 import 'package:flutter_readrss/components/app_bar.dart';
 import 'package:flutter_readrss/components/avatars.dart';
 import 'package:flutter_readrss/const/screen_page.dart';
 import 'package:flutter_readrss/model/feed_item.dart';
 import 'package:flutter_readrss/model/feed_source.dart';
 import 'package:flutter_readrss/styles/styles.dart';
-import 'package:flutter_readrss/viewmodels/feed_items_notifier.dart';
 import 'package:flutter_readrss/viewmodels/feed_source_notifier.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
@@ -19,7 +19,12 @@ import 'container_page.dart';
 class SettingsPage extends StatelessWidget {
   const SettingsPage({
     super.key,
+    required this.mainFeedBloc,
+    required this.personalFeedBloc,
   });
+
+  final FeedItemsBloc mainFeedBloc;
+  final FeedItemsBloc personalFeedBloc;
 
   @override
   Widget build(BuildContext context) {
@@ -38,11 +43,16 @@ class SettingsPage extends StatelessWidget {
             onTap: navbarNotifier.changePage,
             context: consumerContext,
           ),
-          body: const Column(
+          // TODO: implement managing the personal feed as well
+          body: Column(
             children: <Widget>[
-              FeedSourceListTitle(),
+              const FeedSourceListTitle(
+                title: 'Main Feed List'
+              ),
               Expanded(
-                child: FeedSourceList(),
+                child: FeedSourceList(
+                  feedItemsBloc: mainFeedBloc,
+                ),
               ),
             ],
           ),
@@ -56,8 +66,7 @@ class SettingsPage extends StatelessWidget {
                       child: AddFeedSourceDialog(
                         feedSourceNotifier:
                             Provider.of<FeedSourceNotifier>(consumerContext),
-                        feedItemsNotifier:
-                            Provider.of<FeedItemsNotifier>(consumerContext),
+                        feedItemsBloc: mainFeedBloc,
                       ),
                     ),
                   );
@@ -76,11 +85,11 @@ class AddFeedSourceDialog extends StatefulWidget {
   const AddFeedSourceDialog({
     super.key,
     required this.feedSourceNotifier,
-    required this.feedItemsNotifier,
+    required this.feedItemsBloc,
   });
 
   final FeedSourceNotifier feedSourceNotifier;
-  final FeedItemsNotifier feedItemsNotifier;
+  final FeedItemsBloc feedItemsBloc;
 
   @override
   State<AddFeedSourceDialog> createState() => _AddFeedSourceDialogState();
@@ -91,10 +100,6 @@ class _AddFeedSourceDialogState extends State<AddFeedSourceDialog> {
 
   var loading = false;
   String? feedSourceError;
-
-  void clearFeedSourceError() {
-    setState(() => feedSourceError = null);
-  }
 
   void setFeedSourceError(String error) {
     setState(() {
@@ -128,57 +133,59 @@ class _AddFeedSourceDialogState extends State<AddFeedSourceDialog> {
       (res) {
         log('trying to parse rss feed');
 
-        // TODO: handle exceptions if anything fails here or below
-        final feed = RssFeed.parse(res.body);
+        try {
+          final feed = RssFeed.parse(res.body);
 
-        if (feed.title == null) {
-          log('to title field found in the feed');
-          setFeedSourceError("No 'title' field found in the feed");
-          return;
+          if (feed.title == null) {
+            log('no title field found in the feed');
+            setFeedSourceError("No 'title' field found in the feed");
+            return;
+          }
+
+          Image? feedImage;
+          if (feed.image?.url?.isNotEmpty == true) {
+            feedImage = Image.network(feed.image!.url!);
+          }
+
+          final feedSource =
+              FeedSource(link: url, title: feed.title!, image: feedImage);
+
+          log('adding feed source');
+          widget.feedSourceNotifier.addSource(feedSource);
+
+          if (feed.items != null) {
+            final feedItems = feed.items!
+                .where(
+                    (rssItem) => rssItem.title != null && rssItem.link != null)
+                .map((rssItem) {
+              // TODO: fetch views, likes and if the user liked the feed item from the backend
+              return FeedItem(
+                feedSourceTitle: feedSource.title,
+                feedSourceLink: feedSource.link,
+                title: rssItem.title!,
+                views: 42, // TODO: fetch this
+                likes: 42, // TODO: fetch this
+                liked: false, // TODO: fetch this
+                description: rssItem.description,
+                link: rssItem.link!,
+                sourceIcon: feedSource.image,
+                pubDate: rssItem.pubDate,
+              );
+            }).toList();
+
+            widget.feedItemsBloc.add(feedItems);
+          }
+
+          clearLoading();
+          Navigator.of(context).pop();
+        } catch (e) {
+          log("an error occurred while parsing the rss feed: $e");
+          setFeedSourceError("Error while parsing the rss feed.");
         }
-
-        Image? feedImage;
-        if (feed.image?.url?.isNotEmpty == true) {
-          feedImage = Image.network(feed.image!.url!);
-        }
-
-        final feedSource =
-            FeedSource(link: url, title: feed.title!, image: feedImage);
-
-        log('adding feed source');
-        widget.feedSourceNotifier.addSource(feedSource);
-
-        // TODO: add the feed items too
-
-        if (feed.items != null) {
-          final feedItems = feed.items!
-              .where((rssItem) => rssItem.title != null && rssItem.link != null)
-              .map((rssItem) {
-                // TODO: fetch views, likes and if the user liked the feed item from the backend
-                return FeedItem(
-                  feedSourceTitle: feedSource.title,
-                  title: rssItem.title!,
-                  views: 42, // TODO: fetch this
-                  likes: 42, // TODO: fetch this
-                  liked: false, // TODO: fetch this
-                  description: rssItem.description,
-                  link: rssItem.link!,
-                  sourceIcon: feedSource.image,
-                  pubDate: rssItem.pubDate,
-                );
-              })
-              .toList();
-
-          widget.feedItemsNotifier.addItems(feedItems);
-        }
-
-        clearLoading();
-        Navigator.of(context).pop();
-
       },
       onError: (err) {
         log('an error occurred: $err');
-        setFeedSourceError("An unknown error occurred. Check the URL.");
+        setFeedSourceError("An error occurred. Check the URL.");
       },
     );
   }
@@ -229,15 +236,18 @@ class _AddFeedSourceDialogState extends State<AddFeedSourceDialog> {
 class FeedSourceListTitle extends StatelessWidget {
   const FeedSourceListTitle({
     super.key,
+    required this.title,
   });
+
+  final String title;
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.all(8.0),
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
       child: Text(
-        'Feed List',
-        style: TextStyle(
+        title,
+        style: const TextStyle(
           fontSize: 24,
           fontWeight: FontWeight.bold,
         ),
@@ -247,9 +257,9 @@ class FeedSourceListTitle extends StatelessWidget {
 }
 
 class FeedSourceList extends StatelessWidget {
-  const FeedSourceList({
-    super.key,
-  });
+  const FeedSourceList({super.key, required this.feedItemsBloc});
+
+  final FeedItemsBloc feedItemsBloc;
 
   @override
   Widget build(BuildContext context) {
@@ -272,10 +282,14 @@ class FeedSourceList extends StatelessWidget {
     return ListView.builder(
       itemCount: feedSources.length,
       itemBuilder: (context, index) {
-        var item = feedSources[index];
-        return FeedSourceListTile(
-          feedSource: item,
-          removeItem: () => feedSourceNotifier.removeSource(item),
+        var source = feedSources[index];
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: FeedSourceListTile(
+              feedSource: source,
+              feedSourceNotifier: feedSourceNotifier,
+              feedItemsBloc: feedItemsBloc,
+          ),
         );
       },
       padding: const EdgeInsets.all(8.0),
@@ -287,11 +301,23 @@ class FeedSourceListTile extends StatefulWidget {
   const FeedSourceListTile({
     super.key,
     required this.feedSource,
-    required this.removeItem,
+    required this.feedSourceNotifier,
+    required this.feedItemsBloc,
   });
 
   final FeedSource feedSource;
-  final void Function() removeItem;
+  final FeedSourceNotifier feedSourceNotifier;
+  final FeedItemsBloc feedItemsBloc;
+
+  void removeSource() {
+    feedSourceNotifier.removeSource(feedSource);
+    feedItemsBloc.removeSource(feedSource);
+  }
+
+  void filterItemsFromSource() {
+    feedSource.toggleEnabled();
+    feedItemsBloc.filterSource(feedSource);
+  }
 
   @override
   State<FeedSourceListTile> createState() => _FeedSourceListTileState();
@@ -302,7 +328,7 @@ class _FeedSourceListTileState extends State<FeedSourceListTile> {
 
   void toggleEnabled() {
     setState(() {
-      widget.feedSource.toggleEnabled();
+      widget.filterItemsFromSource();
       enabled = !enabled;
     });
   }
@@ -335,7 +361,7 @@ class _FeedSourceListTileState extends State<FeedSourceListTile> {
                         ),
                         TextButton(
                           onPressed: () {
-                            widget.removeItem();
+                            widget.removeSource();
                             Navigator.of(context).pop();
                           },
                           child: Text(

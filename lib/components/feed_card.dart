@@ -92,11 +92,15 @@ class FeedCardHeader extends StatelessWidget {
               children: [
                 FeedAvatar(image: feedItem.sourceIcon),
                 const SizedBox(width: 12),
-                Text(
-                  feedItem.feedSourceTitle,
-                  style: textTheme(context)
-                      .bodyLarge
-                      ?.copyWith(fontWeight: FontWeight.bold),
+                Expanded(
+                  flex: 4,
+                  child: Text(
+                    feedItem.feedSourceTitle,
+                    style: textTheme(context)
+                        .bodyLarge
+                        ?.copyWith(fontWeight: FontWeight.bold),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 )
               ],
             ),

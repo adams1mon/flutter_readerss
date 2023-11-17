@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_readrss/bloc/feed_items_bloc.dart';
 import 'package:flutter_readrss/const/screen_page.dart';
 import 'package:flutter_readrss/pages/feed_page.dart';
 import 'package:flutter_readrss/pages/settings_page.dart';
-import 'package:flutter_readrss/viewmodels/feed_items_notifier.dart';
 import 'package:provider/provider.dart';
 
 class ReadrssBottomNavbarNotifier extends ChangeNotifier {
@@ -27,17 +27,26 @@ class ContainerPage extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (context) => ReadrssBottomNavbarNotifier(),
       child: Consumer<ReadrssBottomNavbarNotifier>(
-        builder: (context, navbarNotifier, child) => ChangeNotifierProvider(
-          create: (context) => FeedItemsNotifier(),
-          child: IndexedStack(
-            index: navbarNotifier.pageIndex,
-            children: [
-              FeedPage(title: ScreenPage.mainFeed.title),
-              FeedPage(title: ScreenPage.personalFeed.title),
-              FeedPage(title: ScreenPage.bookmarks.title),
-              const SettingsPage(),
-            ],
-          ),
+        builder: (context, navbarNotifier, child) => IndexedStack(
+          index: navbarNotifier.pageIndex,
+          children: [
+            FeedPage(
+              title: ScreenPage.mainFeed.title,
+              feedItemsBloc: mainFeedBloc,
+            ),
+            FeedPage(
+              title: ScreenPage.personalFeed.title,
+              feedItemsBloc: personalFeedBloc,
+            ),
+            FeedPage(
+              title: ScreenPage.bookmarks.title,
+              feedItemsBloc: bookmarkFeedBloc,
+            ),
+            SettingsPage(
+              mainFeedBloc: mainFeedBloc,
+              personalFeedBloc: personalFeedBloc,
+            ),
+          ],
         ),
       ),
     );
