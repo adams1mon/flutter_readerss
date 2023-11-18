@@ -55,19 +55,9 @@ class SettingsPage extends StatelessWidget {
         onTap: navbarNotifier.changePage,
         context: context,
       ),
-      // TODO: implement managing the personal feed as well
       body: Center(
         child: Column(
           children: [
-            // Expanded(
-            //   flex: 1,
-            //   child: FeedSourcesContainer(
-            //     listTitle: "Main Feed List",
-            //     feedBloc: mainFeedBloc,
-            //     launchAddFeedDialog: () =>
-            //         launchAddFeedDialog(context, mainFeedBloc),
-            //   ),
-            // ),
             Expanded(
               flex: 1,
               child: FeedSourcesContainer(
@@ -80,6 +70,7 @@ class SettingsPage extends StatelessWidget {
           ],
         ),
       ),
+      // TODO: decide if floatingActionButton stays or we also want to manage the main feed
       // floatingActionButton: FloatingActionButton(
       //   onPressed: () {
       //   },
@@ -384,7 +375,7 @@ class FeedSourceListTile extends StatelessWidget {
     super.key,
     required this.feedSource,
     required this.removeSource,
-    required this.toggleSource(),
+    required this.toggleSource,
   });
 
   final FeedSource feedSource;

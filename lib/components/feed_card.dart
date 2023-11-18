@@ -19,7 +19,6 @@ class FeedCard extends StatefulWidget {
 
 class _FeedCardState extends State<FeedCard> {
   var _expanded = false;
-  // var _bookmarked = false;
   var _liked = false;
 
   void toggleExpanded() {
@@ -30,9 +29,7 @@ class _FeedCardState extends State<FeedCard> {
     setState(() {
       // does this work ???
       // TODO: call bookmarking service
-      // widget.feedItem.bookmarked = !widget.feedItem.bookmarked;
       widget.toggleBookmarked();
-      // _bookmarked = !_bookmarked;
     });
   }
 
