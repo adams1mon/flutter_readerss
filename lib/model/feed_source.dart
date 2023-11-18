@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_readrss/model/feed_item.dart';
 import 'package:flutter_readrss/styles/styles.dart';
 
 // for the settings page
@@ -10,19 +11,25 @@ class FeedSource {
   final Image image;
   final int ttl;
 
+  final List<FeedItem> feedItems;
+
   FeedSource({
     required this.title,
     required this.link,
     this.enabled = true,
     required image,
-    this.ttl = 10,
-  }) : image = image ?? defaultFeedImage;
+    int? ttl,
+    feedItems,
+  })  : image = image ?? defaultFeedImage,
+        feedItems = feedItems ?? <FeedItem>[],
+        ttl = ttl ?? 10;
 
   void toggleEnabled() {
     enabled = !enabled;
   }
 
   bool equals(FeedSource other) {
-    return identical(this, other) || (title == other.title && link == other.link);
+    return identical(this, other) ||
+        (title == other.title && link == other.link);
   }
 }

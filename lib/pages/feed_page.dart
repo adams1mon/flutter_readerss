@@ -1,7 +1,7 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_readrss/bloc/feed_items_bloc.dart';
+import 'package:flutter_readrss/bloc/feed_bloc.dart';
 import 'package:flutter_readrss/components/app_bar.dart';
 import 'package:flutter_readrss/components/bottom_navbar.dart';
 import 'package:flutter_readrss/components/feed_card.dart';
@@ -13,11 +13,15 @@ class FeedPage extends StatelessWidget {
   const FeedPage({
     super.key,
     required this.title,
-    required this.feedItemsBloc,
+    required this.feedItemsStream,
+    required this.bookmarksBloc,
   });
 
   final String title;
-  final FeedItemsBloc feedItemsBloc;
+  // final FeedItemsBloc feedItemsBloc;
+  final Stream<FeedItemsEvent> feedItemsStream;
+
+  final BookmarksBloc bookmarksBloc;
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +39,10 @@ class FeedPage extends StatelessWidget {
       ),
       backgroundColor: colors(context).background,
       body: Center(
-        child: FeedList(feedItemStream: feedItemsBloc.stream),
+        child: FeedList(
+          feedItemStream: feedItemsStream,
+          bookmarksBloc: bookmarksBloc,
+        ),
       ),
     );
   }
@@ -60,17 +67,19 @@ class FeedList extends StatelessWidget {
   const FeedList({
     super.key,
     required this.feedItemStream,
+    required this.bookmarksBloc,
   });
 
-  final Stream<FeedItemListEvent> feedItemStream;
+  final Stream<FeedItemsEvent> feedItemStream;
+  final BookmarksBloc bookmarksBloc;
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<FeedItemListEvent>(
+    return StreamBuilder<FeedItemsEvent>(
       stream: feedItemStream,
       builder: (context, snapshot) {
         if (snapshot.hasError) {
-          log("error when consuming from mainFeedItemsBloc.stream, ${snapshot.error}");
+          log("error when consuming from stream, ${snapshot.error}");
           return const Text("An unknown error occurred.");
         } else if (!snapshot.hasData) {
           return Text(
@@ -87,6 +96,7 @@ class FeedList extends StatelessWidget {
               textAlign: TextAlign.center,
             );
           }
+          
           return ListView.builder(
             itemCount: items.length,
             itemBuilder: (context, index) {
@@ -94,6 +104,8 @@ class FeedList extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 4.0),
                 child: FeedCard(
                   feedItem: items[index],
+                  toggleBookmarked: () =>
+                      bookmarksBloc.toggleBookmarked(items[index]),
                 ),
               );
             },

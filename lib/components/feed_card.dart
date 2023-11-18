@@ -1,13 +1,17 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_readrss/components/avatars.dart';
 import 'package:flutter_readrss/model/feed_item.dart';
 import 'package:flutter_readrss/styles/styles.dart';
 
 class FeedCard extends StatefulWidget {
-  const FeedCard({super.key, required this.feedItem});
+  const FeedCard({
+    super.key,
+    required this.feedItem,
+    required this.toggleBookmarked,
+  });
 
   final FeedItem feedItem;
+  final void Function() toggleBookmarked;
 
   @override
   State<FeedCard> createState() => _FeedCardState();
@@ -15,7 +19,7 @@ class FeedCard extends StatefulWidget {
 
 class _FeedCardState extends State<FeedCard> {
   var _expanded = false;
-  var _bookmarked = false;
+  // var _bookmarked = false;
   var _liked = false;
 
   void toggleExpanded() {
@@ -26,9 +30,9 @@ class _FeedCardState extends State<FeedCard> {
     setState(() {
       // does this work ???
       // TODO: call bookmarking service
-      widget.feedItem.bookmarked = !widget.feedItem.bookmarked;
-
-      _bookmarked = !_bookmarked;
+      // widget.feedItem.bookmarked = !widget.feedItem.bookmarked;
+      widget.toggleBookmarked();
+      // _bookmarked = !_bookmarked;
     });
   }
 
@@ -47,7 +51,7 @@ class _FeedCardState extends State<FeedCard> {
           children: [
             FeedCardHeader(
               feedItem: widget.feedItem,
-              bookmarked: _bookmarked,
+              bookmarked: widget.feedItem.bookmarked,
               toggleBookmarked: toggleBookmarked,
               expanded: _expanded,
               toggleExpanded: toggleExpanded,
@@ -212,7 +216,7 @@ class FeedCardBodyExpandedSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        if (feedItemHasDescription()) 
+        if (feedItemHasDescription())
           Text(
             feedItem.description ?? "",
             style: textTheme(context).bodyMedium,
