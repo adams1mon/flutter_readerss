@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_readrss/bloc/feed_bloc.dart';
 import 'package:flutter_readrss/components/app_bar.dart';
 import 'package:flutter_readrss/components/avatars.dart';
+import 'package:flutter_readrss/components/help_text.dart';
 import 'package:flutter_readrss/const/screen_page.dart';
 import 'package:flutter_readrss/model/feed_item.dart';
 import 'package:flutter_readrss/model/feed_source.dart';
@@ -25,6 +26,21 @@ class SettingsPage extends StatelessWidget {
   final FeedSourcesBloc mainFeedBloc;
   final FeedSourcesBloc personalFeedBloc;
 
+  void launchAddFeedDialog(BuildContext context, FeedSourcesBloc feedBloc) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Center(
+          child: SingleChildScrollView(
+            child: AddFeedSourceDialog(
+              feedBloc: feedBloc,
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final navbarNotifier = Provider.of<ReadrssBottomNavbarNotifier>(context);
@@ -42,32 +58,80 @@ class SettingsPage extends StatelessWidget {
       // TODO: implement managing the personal feed as well
       body: Center(
         child: Column(
-          children: <Widget>[
-            const FeedSourceListTitle(title: 'Main Feed List'),
+          children: [
+            // Expanded(
+            //   flex: 1,
+            //   child: FeedSourcesContainer(
+            //     listTitle: "Main Feed List",
+            //     feedBloc: mainFeedBloc,
+            //     launchAddFeedDialog: () =>
+            //         launchAddFeedDialog(context, mainFeedBloc),
+            //   ),
+            // ),
             Expanded(
-              child: FeedSourceList(
-                feedBloc: mainFeedBloc,
+              flex: 1,
+              child: FeedSourcesContainer(
+                listTitle: "Personal Feed List",
+                feedBloc: personalFeedBloc,
+                launchAddFeedDialog: () =>
+                    launchAddFeedDialog(context, personalFeedBloc),
               ),
             ),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          showDialog(
-            context: context,
-            builder: (BuildContext context) {
-              return Center(
-                child: SingleChildScrollView(
-                  child: AddFeedSourceDialog( 
-                    feedBloc: mainFeedBloc,
-                  ),
+      // floatingActionButton: FloatingActionButton(
+      //   onPressed: () {
+      //   },
+      //   child: const Icon(Icons.add),
+      // ),
+    );
+  }
+}
+
+class FeedSourcesContainer extends StatelessWidget {
+  const FeedSourcesContainer({
+    super.key,
+    required this.listTitle,
+    required this.feedBloc,
+    required this.launchAddFeedDialog,
+  });
+
+  final String listTitle;
+  final FeedSourcesBloc feedBloc;
+  final void Function() launchAddFeedDialog;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(12.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: <Widget>[
+          FeedSourceListTitle(
+            title: listTitle,
+          ),
+          Expanded(
+            flex: 1,
+            child: FeedSourceList(
+              feedBloc: feedBloc,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(top: 12.0),
+            child: SizedBox(
+              width: double.infinity,
+              child: TextButton(
+                onPressed: launchAddFeedDialog,
+                style: TextButton.styleFrom(
+                  backgroundColor: colors(context).primary,
+                  foregroundColor: colors(context).onPrimary,
                 ),
-              );
-            },
-          );
-        },
-        child: const Icon(Icons.add),
+                child: const Text("Add Feed"),
+              ),
+            ),
+          )
+        ],
       ),
     );
   }
@@ -172,8 +236,7 @@ class _AddFeedSourceDialogState extends State<AddFeedSourceDialog> {
               image: feedImage,
               enabled: true,
               ttl: feed.ttl,
-              feedItems: feedItems
-          );
+              feedItems: feedItems);
 
           log('adding feed source');
 
@@ -264,9 +327,15 @@ class FeedSourceListTitle extends StatelessWidget {
 }
 
 class FeedSourceList extends StatelessWidget {
-  const FeedSourceList({super.key, required this.feedBloc});
+  const FeedSourceList({
+    super.key,
+    required this.feedBloc,
+    this.noItemsText =
+        "It seems like there are no feed sources.\nTry to add some below!",
+  });
 
   final FeedSourcesBloc feedBloc;
+  final String noItemsText;
 
   void removeSource(FeedSource source) {
     feedBloc.delete(source);
@@ -278,7 +347,6 @@ class FeedSourceList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     return StreamBuilder<FeedSourcesEvent>(
       stream: feedBloc.sourcesStream,
       builder: (context, snapshot) {
@@ -286,13 +354,7 @@ class FeedSourceList extends StatelessWidget {
           log("error when consuming from stream, ${snapshot.error}");
           return const Text("An unknown error occurred.");
         } else if (!snapshot.hasData || snapshot.data!.feedSources.isEmpty) {
-          return Center(
-            child: Text(
-              "It seems like there are no feeds.\nTry to add some below!",
-              style: textTheme(context).bodyLarge,
-              textAlign: TextAlign.center,
-            ),
-          );
+          return HelpText(text: noItemsText);
         } else {
           final sources = snapshot.data!.feedSources;
 
@@ -312,7 +374,7 @@ class FeedSourceList extends StatelessWidget {
             padding: const EdgeInsets.all(8.0),
           );
         }
-      }, 
+      },
     );
   }
 }
@@ -347,8 +409,8 @@ class FeedSourceListTile extends StatelessWidget {
                     context: context,
                     builder: (context) => AlertDialog(
                       title: const Text("Delete feed source"),
-                      content: Text(
-                          "Are you sure to delete ${feedSource.title}?"),
+                      content:
+                          Text("Are you sure to delete ${feedSource.title}?"),
                       actions: <Widget>[
                         TextButton(
                           child: const Text('Cancel'),

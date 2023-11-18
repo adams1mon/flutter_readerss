@@ -44,6 +44,7 @@ class ContainerPage extends StatelessWidget {
               title: ScreenPage.bookmarks.title,
               feedItemsStream: bookmarksBloc.itemsStream,
               bookmarksBloc: bookmarksBloc,
+              noItemsText: "Your bookmarked feed items will appear here.",
             ),
             SettingsPage(
               mainFeedBloc: mainFeedBloc,

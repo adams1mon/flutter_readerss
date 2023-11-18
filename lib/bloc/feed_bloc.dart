@@ -12,85 +12,13 @@ class FeedItemsEvent {
   final List<FeedItem> feedItems;
 }
 
-class FeedBloc {
-  // internal state which gets published on every change
-  final _feedSources = <FeedSource>[];
+// TODO: persist some elements to the DB?
 
-  // broadcast stream because the items stream consumers indirectly listen to it
-  final _feedSourcesStreamController =
-      StreamController<FeedSourcesEvent>.broadcast();
-
-  Stream<FeedSourcesEvent> get sourcesStream =>
-      _feedSourcesStreamController.stream;
-  Stream<FeedItemsEvent> get itemsStream =>
-      _flatMapFeedSourcesToFeedItems(_feedSourcesStreamController.stream);
-  Stream<FeedItemsEvent> get bookmarkedItemsStream =>
-      _filterBookmarkedFeedItems(itemsStream);
-
-  Stream<FeedItemsEvent> _flatMapFeedSourcesToFeedItems(
-      Stream<FeedSourcesEvent> sourceStream) {
-    return sourceStream
-        .expand(
-          (sourcesEvent) =>
-              //     sourcesEvent.event.map((source) => source.feedItems))
-              // .map((feedItems) => FeedItemsEvent(feedItems));
-              sourcesEvent.feedSources.map((source) => source.feedItems),
-        )
-        .map(
-          (feedItems) => FeedItemsEvent(feedItems: feedItems),
-        );
-  }
-
-  Stream<FeedItemsEvent> _filterBookmarkedFeedItems(
-      Stream<FeedItemsEvent> itemsStream) {
-    return itemsStream.map(
-      (event) => FeedItemsEvent(
-        feedItems: event.feedItems
-            .where(
-              (item) => item.bookmarked,
-            )
-            .toList(),
-      ),
-    );
-  }
-
-  void add(FeedSource source) {
-    if (!_feedSources.any((s) => s.equals(source))) {
-      _feedSources.add(source);
-    }
-    _publish(_feedSources);
-  }
-
-  void delete(FeedSource source) {
-    _feedSources.removeWhere((s) => s.equals(source));
-    _publish(_feedSources);
-  }
-
-  void toggleEnabled(FeedSource source) {
-    final i = _feedSources.indexWhere((s) => s.equals(source));
-    if (i > -1) {
-      _feedSources[i].toggleEnabled();
-      _publish(_feedSources);
-    }
-  }
-
-  void _publish(List<FeedSource> sources) {
-    // _feedSourcesStreamController.sink.add(FeedSourcesEvent(sources));
-    _feedSourcesStreamController.sink
-        .add(FeedSourcesEvent(feedSources: sources));
-  }
-
-  // TODO: where do we call this ?
-  dispose() {
-    _feedSourcesStreamController.close();
-  }
-}
-
-class FeedItemsBloc {
+class _FeedItemsBloc {
   // internal state which gets published on every change
   final _feedItems = <FeedItem>[];
 
-  // broadcast stream because the items stream consumers indirectly listen to it
+  // broadcast stream because we could have more listeners
   final _feedItemsController = StreamController<FeedItemsEvent>.broadcast();
 
   Stream<FeedItemsEvent> get itemsStream => _feedItemsController.stream;
@@ -129,14 +57,14 @@ class FeedSourcesBloc {
   // internal state which gets published on every change
   final _feedSources = <FeedSource>[];
 
-  // broadcast stream because the items stream consumers indirectly listen to it
+  // broadcast stream because we could have more listeners 
   final _feedSourcesStreamController =
       StreamController<FeedSourcesEvent>.broadcast();
 
   Stream<FeedSourcesEvent> get sourcesStream =>
       _feedSourcesStreamController.stream;
 
-  final _itemsBloc = FeedItemsBloc();
+  final _itemsBloc = _FeedItemsBloc();
 
   Stream<FeedItemsEvent> get itemsStream => _itemsBloc.itemsStream;
 
@@ -183,7 +111,7 @@ class FeedSourcesBloc {
 
 class BookmarksBloc {
 
-  final _itemsBloc = FeedItemsBloc();
+  final _itemsBloc = _FeedItemsBloc();
   Stream<FeedItemsEvent> get itemsStream => _itemsBloc.itemsStream;
 
   void toggleBookmarked(FeedItem item) {
@@ -201,55 +129,8 @@ class BookmarksBloc {
   }
 }
 
-
-Stream<T> mergeStreams<T>(List<Stream<T>> streams) {
-  late final StreamController<T> controller;
-  final subs = <StreamSubscription<T>>[];
-
-  void listen() {
-    for (final stream in streams) {
-      subs.add(
-        stream.listen(
-          (event) {
-            controller.sink.add(event);
-          },
-        ),
-      );
-    }
-  }
-
-  void cancel() {
-    for (final sub in subs) {
-      sub.cancel();
-    }
-  }
-
-  void pause() {
-    for (final sub in subs) {
-      sub.pause();
-    }
-  }
-
-  void resume() {
-    for (final sub in subs) {
-      sub.resume();
-    }
-  }
-
-  controller = StreamController(
-      onListen: listen, onCancel: cancel, onPause: pause, onResume: resume);
-
-  return controller.stream;
-}
-
-
-// final mainFeedBloc = FeedItemsBloc();
-// final personalFeedBloc = FeedItemsBloc();
-// final bookmarkFeedBloc = FeedItemsBloc();
-
-// final mainFeedBloc = FeedBloc();
-// final personalFeedBloc = FeedBloc();
-
+// TODO: initialize these where they are disposable (InheritedWidget maybe ?)
+// (does the global scope get collected correctly, or do we leak memory here??)
 final mainFeedBloc = FeedSourcesBloc();
 final personalFeedBloc = FeedSourcesBloc();
 final bookmarksBloc = BookmarksBloc();
