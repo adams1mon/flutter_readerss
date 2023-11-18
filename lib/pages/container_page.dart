@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_readrss/bloc/feed_items_bloc.dart';
+import 'package:flutter_readrss/bloc/feed_bloc.dart';
 import 'package:flutter_readrss/const/screen_page.dart';
 import 'package:flutter_readrss/pages/feed_page.dart';
 import 'package:flutter_readrss/pages/settings_page.dart';
@@ -32,15 +32,19 @@ class ContainerPage extends StatelessWidget {
           children: [
             FeedPage(
               title: ScreenPage.mainFeed.title,
-              feedItemsBloc: mainFeedBloc,
+              feedItemsStream: mainFeedBloc.itemsStream,
+              bookmarksBloc: bookmarksBloc,
             ),
             FeedPage(
               title: ScreenPage.personalFeed.title,
-              feedItemsBloc: personalFeedBloc,
+              feedItemsStream: personalFeedBloc.itemsStream,
+              bookmarksBloc: bookmarksBloc,
             ),
             FeedPage(
               title: ScreenPage.bookmarks.title,
-              feedItemsBloc: bookmarkFeedBloc,
+              feedItemsStream: bookmarksBloc.itemsStream,
+              bookmarksBloc: bookmarksBloc,
+              noItemsText: "Your bookmarked feed items will appear here.",
             ),
             SettingsPage(
               mainFeedBloc: mainFeedBloc,
