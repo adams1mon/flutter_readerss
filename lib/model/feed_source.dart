@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_readrss/model/feed_item.dart';
 import 'package:flutter_readrss/styles/styles.dart';
@@ -25,6 +27,7 @@ class FeedSource {
         ttl = ttl ?? 10;
 
   void toggleEnabled() {
+    log('link: ${link}');
     enabled = !enabled;
   }
 

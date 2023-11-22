@@ -1,7 +1,8 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_readrss/bloc/feed_bloc.dart';
+import 'package:flutter_readrss/bloc/feed_items_bloc.dart';
+import 'package:flutter_readrss/bloc/bookmarks_bloc.dart';
 import 'package:flutter_readrss/components/app_bar.dart';
 import 'package:flutter_readrss/components/bottom_navbar.dart';
 import 'package:flutter_readrss/components/feed_card.dart';

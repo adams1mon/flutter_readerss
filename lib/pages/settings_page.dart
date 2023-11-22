@@ -1,7 +1,7 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_readrss/bloc/feed_bloc.dart';
+import 'package:flutter_readrss/bloc/feed_sources_bloc.dart';
 import 'package:flutter_readrss/components/app_bar.dart';
 import 'package:flutter_readrss/components/avatars.dart';
 import 'package:flutter_readrss/components/help_text.dart';
@@ -210,9 +210,12 @@ class _AddFeedSourceDialogState extends State<AddFeedSourceDialog> {
                 feedSourceTitle: feed.title!,
                 feedSourceLink: feedLink!,
                 title: rssItem.title!,
-                views: 42, // TODO: fetch this
-                likes: 42, // TODO: fetch this
-                liked: false, // TODO: fetch this
+                views: 42,
+                // TODO: fetch this
+                likes: 42,
+                // TODO: fetch this
+                liked: false,
+                // TODO: fetch this
                 description: rssItem.description,
                 link: rssItem.link!,
                 sourceIcon: feedImage,
