@@ -4,12 +4,12 @@ import 'package:flutter_readrss/styles/styles.dart';
 // for the feed pages
 class FeedItem {
   final String feedSourceTitle;
-  final String feedSourceLink; // this is like a foreign key
+  final String feedSourceRssUrl; // this is like a foreign key
   final String title;
   bool bookmarked;
   bool liked;
   final String? description;
-  final String link;
+  final String articleUrl;
 
   final Image sourceIcon;
 
@@ -20,12 +20,12 @@ class FeedItem {
 
   FeedItem({
     required this.feedSourceTitle,
-    required this.feedSourceLink,
+    required this.feedSourceRssUrl,
     required this.title,
     this.bookmarked = false, 
     this.liked = false, 
     this.description,
-    required this.link,
+    required this.articleUrl,
     Image? sourceIcon,
     this.pubDate,
     required this.views,

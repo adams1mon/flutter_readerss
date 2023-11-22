@@ -34,7 +34,7 @@ class _FeedItemsBloc {
   }
 
   void deleteBySource(FeedSource source) {
-    _feedItems.removeWhere((item) => item.feedSourceLink == source.link);
+    _feedItems.removeWhere((item) => item.feedSourceRssUrl == source.siteUrl);
     _publish(_feedItems);
   }
 

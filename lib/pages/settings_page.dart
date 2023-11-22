@@ -6,12 +6,10 @@ import 'package:flutter_readrss/components/app_bar.dart';
 import 'package:flutter_readrss/components/avatars.dart';
 import 'package:flutter_readrss/components/help_text.dart';
 import 'package:flutter_readrss/const/screen_page.dart';
-import 'package:flutter_readrss/model/feed_item.dart';
+import 'package:flutter_readrss/data/rss_fetcher.dart';
 import 'package:flutter_readrss/model/feed_source.dart';
 import 'package:flutter_readrss/styles/styles.dart';
 import 'package:provider/provider.dart';
-import 'package:http/http.dart' as http;
-import 'package:webfeed/domain/rss_feed.dart';
 
 import '../components/bottom_navbar.dart';
 import 'container_page.dart';
@@ -166,85 +164,14 @@ class _AddFeedSourceDialogState extends State<AddFeedSourceDialog> {
 
     var url = _textController.text;
 
-    log('trying to parse $url');
-    var uri = Uri.tryParse(url);
-    if (uri == null) {
-      log('invalid url $url, uri: $uri');
-      setFeedSourceError("Invalid URI");
-      return;
-    }
-
-    http.get(uri).then(
-      (res) {
-        log('trying to parse rss feed');
-
-        try {
-          final feed = RssFeed.parse(res.body);
-
-          if (feed.title == null) {
-            log('no title field found in the feed');
-            setFeedSourceError("No 'title' field found in the feed");
-            return;
-          }
-
-          var feedLink = feed.link;
-          if (feed.link == null) {
-            log('no link field found in the feed, using the user-given url');
-            feedLink = url;
-          }
-
-          Image? feedImage;
-          if (feed.image?.url?.isNotEmpty == true) {
-            feedImage = Image.network(feed.image!.url!);
-          }
-
-          final feedItems = <FeedItem>[];
-
-          if (feed.items != null) {
-            feedItems.addAll(feed.items!
-                .where(
-                    (rssItem) => rssItem.title != null && rssItem.link != null)
-                .map((rssItem) {
-              // TODO: fetch views, likes and if the user liked the feed item from the backend
-              return FeedItem(
-                feedSourceTitle: feed.title!,
-                feedSourceLink: feedLink!,
-                title: rssItem.title!,
-                views: 42, // TODO: fetch this
-                likes: 42, // TODO: fetch this
-                liked: false, // TODO: fetch this
-                description: rssItem.description,
-                link: rssItem.link!,
-                sourceIcon: feedImage,
-                pubDate: rssItem.pubDate,
-              );
-            }).toList());
-          }
-
-          final feedSource = FeedSource(
-              title: feed.title!,
-              link: feedLink!,
-              image: feedImage,
-              enabled: true,
-              ttl: feed.ttl,
-              feedItems: feedItems);
-
-          log('adding feed source');
-
-          widget.feedBloc.add(feedSource);
-
-          clearLoading();
-          Navigator.of(context).pop();
-        } catch (e) {
-          log("an error occurred while parsing the rss feed: $e");
-          setFeedSourceError("Error while parsing the rss feed.");
-        }
-      },
-      onError: (err) {
-        log('an error occurred: $err');
-        setFeedSourceError("An error occurred. Check the URL.");
-      },
-    );
+    RssFetcher.fetch(url).then((feedSource) {
+      widget.feedBloc.add(feedSource);
+      clearLoading();
+      Navigator.of(context).pop();
+    },
+    onError: (err) {
+      setFeedSourceError((err as RssFetchException).msg);
+    });  
   }
 
   @override

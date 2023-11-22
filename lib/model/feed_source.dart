@@ -5,7 +5,8 @@ import 'package:flutter_readrss/styles/styles.dart';
 // for the settings page
 class FeedSource {
   final String title;
-  final String link;
+  final String rssUrl;
+  final String siteUrl;
   bool enabled;
 
   final Image image;
@@ -15,12 +16,14 @@ class FeedSource {
 
   FeedSource({
     required this.title,
-    required this.link,
+    required this.rssUrl,
+    String? siteUrl,
     this.enabled = true,
     required image,
     int? ttl,
     feedItems,
-  })  : image = image ?? defaultFeedImage,
+  })  : siteUrl = siteUrl ?? "",
+        image = image ?? defaultFeedImage,
         feedItems = feedItems ?? <FeedItem>[],
         ttl = ttl ?? 10;
 
@@ -30,6 +33,6 @@ class FeedSource {
 
   bool equals(FeedSource other) {
     return identical(this, other) ||
-        (title == other.title && link == other.link);
+        (title == other.title && siteUrl == other.siteUrl);
   }
 }
