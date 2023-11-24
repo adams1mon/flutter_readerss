@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_readrss/bloc/feed_bloc.dart';
+import 'package:flutter_readrss/bloc/main_feed_init.dart';
 import 'package:flutter_readrss/const/screen_page.dart';
 import 'package:flutter_readrss/pages/feed_page.dart';
 import 'package:flutter_readrss/pages/settings_page.dart';
@@ -19,8 +20,28 @@ class ReadrssBottomNavbarNotifier extends ChangeNotifier {
   int get pageIndex => _pageIndex;
 }
 
-class ContainerPage extends StatelessWidget {
+class ContainerPage extends StatefulWidget {
   const ContainerPage({super.key});
+
+  @override
+  State<ContainerPage> createState() => _ContainerPageState();
+}
+
+class _ContainerPageState extends State<ContainerPage> {
+
+  @override
+  void initState() {
+    super.initState();
+    initMainFeed();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    mainFeedBloc.dispose();
+    personalFeedBloc.dispose();
+    bookmarksBloc.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {

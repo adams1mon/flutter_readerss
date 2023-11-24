@@ -27,8 +27,6 @@ class _FeedCardState extends State<FeedCard> {
 
   void toggleBookmarked() {
     setState(() {
-      // does this work ???
-      // TODO: call bookmarking service
       widget.toggleBookmarked();
     });
   }
@@ -98,8 +96,8 @@ class FeedCardHeader extends StatelessWidget {
                   child: Text(
                     feedItem.feedSourceTitle,
                     style: textTheme(context)
-                        .bodyLarge
-                        ?.copyWith(fontWeight: FontWeight.bold),
+                        .bodyMedium,
+                        // ?.copyWith(fontWeight: FontWeight.bold),
                     overflow: TextOverflow.ellipsis,
                   ),
                 )
@@ -158,14 +156,18 @@ class FeedCardBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(left: 10, top: 8, right: 10, bottom: 4),
+      padding: const EdgeInsets.only(left: 10, top: 4, right: 10, bottom: 4),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            feedItem.title,
-            style: textTheme(context).bodyLarge,
-            maxLines: expanded ? 4 : 2,
-            overflow: TextOverflow.ellipsis,
+          Padding(
+            padding: const EdgeInsets.only(bottom: 4.0),
+            child: Text(
+              feedItem.title,
+              style: textTheme(context).bodyLarge?.copyWith(fontWeight: FontWeight.bold),
+              maxLines: expanded ? 4 : 2,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
           if (expanded)
             Padding(
@@ -175,7 +177,7 @@ class FeedCardBody extends StatelessWidget {
             ),
           if (feedItem.pubDate != null)
             Padding(
-              padding: const EdgeInsets.only(top: 8.0),
+              padding: const EdgeInsets.only(top: 4.0),
               child: Row(
                 children: [
                   Text(

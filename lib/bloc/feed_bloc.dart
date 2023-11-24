@@ -30,6 +30,7 @@ class _FeedItemsBloc {
 
   void addAll(List<FeedItem> items) {
     _feedItems.addAll(items);
+    _feedItems.sort(_comparePubDates);
     _publish(_feedItems);
   }
 
@@ -43,11 +44,23 @@ class _FeedItemsBloc {
     _publish(_feedItems);
   }
 
+  int _comparePubDates(FeedItem a, FeedItem b) {
+    if (a.pubDate == null) {
+      // put 'a' to the end of the list
+      return 1;
+    } else if (b.pubDate == null) {
+      // put 'b' to the end of the list
+      return -1;
+    } else {
+      // descending order
+      return -a.pubDate!.compareTo(b.pubDate!);
+    }
+  }
+
   void _publish(List<FeedItem> items) {
     _feedItemsController.sink.add(FeedItemsEvent(feedItems: items));
   }
 
-  // TODO: where do we call this ?
   dispose() {
     _feedItemsController.close();
   }
@@ -103,7 +116,6 @@ class FeedSourcesBloc {
         .add(FeedSourcesEvent(feedSources: sources));
   }
 
-  // TODO: where do we call this ?
   dispose() {
     _feedSourcesStreamController.close();
   }
@@ -123,7 +135,6 @@ class BookmarksBloc {
     }
   }
 
-  // TODO: where do we call this ?
   dispose() {
     _itemsBloc.dispose();
   }
