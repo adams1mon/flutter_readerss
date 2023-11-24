@@ -39,6 +39,7 @@ dependencies:
   webfeed: ^0.7.0
   provider: ^6.0.5
   http: ^1.1.0
+  webview_flutter: ^4.4.2
 
 dev_dependencies:
   flutter_test:

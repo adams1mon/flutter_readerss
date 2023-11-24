@@ -1,7 +1,11 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_readrss/components/app_bar.dart';
 import 'package:flutter_readrss/components/avatars.dart';
 import 'package:flutter_readrss/model/feed_item.dart';
 import 'package:flutter_readrss/styles/styles.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 
 class FeedCard extends StatefulWidget {
   const FeedCard({
@@ -21,6 +25,8 @@ class _FeedCardState extends State<FeedCard> {
   var _expanded = false;
   var _liked = false;
 
+  // late final WebViewController _webViewController;
+
   void toggleExpanded() {
     setState(() => _expanded = !_expanded);
   }
@@ -35,6 +41,37 @@ class _FeedCardState extends State<FeedCard> {
     // TODO: call liking service
     setState(() => _liked = !_liked);
   }
+
+  // // TODO: navigate the user to a webview page
+  // void _showWebViewError(BuildContext context) {
+  //   ScaffoldMessenger.of(context).showSnackBar(
+  //     const SnackBar(
+  //       content: Text("An error occurred..."),
+  //     ),
+  //   );
+  // }
+
+  // void openUrlInWebView(String url, BuildContext context) {
+  //   final uri = Uri.tryParse(url);
+
+  //   if (uri == null) {
+  //     _showWebViewError(context);
+  //     return;
+  //   }
+
+  //   try {
+  //     _webViewController.loadRequest(uri);
+  //   } catch (e) {
+  //     log("error while loading webview url $url", error: e);
+  //   }
+  // }
+
+  // @override
+  // void initState() {
+  //   super.initState();
+  //   _webViewController = WebViewController()
+  //     ..setJavaScriptMode(JavaScriptMode.unrestricted);
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -95,9 +132,8 @@ class FeedCardHeader extends StatelessWidget {
                   flex: 4,
                   child: Text(
                     feedItem.feedSourceTitle,
-                    style: textTheme(context)
-                        .bodyMedium,
-                        // ?.copyWith(fontWeight: FontWeight.bold),
+                    style: textTheme(context).bodyMedium,
+                    // ?.copyWith(fontWeight: FontWeight.bold),
                     overflow: TextOverflow.ellipsis,
                   ),
                 )
@@ -164,7 +200,9 @@ class FeedCardBody extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: 4.0),
             child: Text(
               feedItem.title,
-              style: textTheme(context).bodyLarge?.copyWith(fontWeight: FontWeight.bold),
+              style: textTheme(context)
+                  .bodyLarge
+                  ?.copyWith(fontWeight: FontWeight.bold),
               maxLines: expanded ? 4 : 2,
               overflow: TextOverflow.ellipsis,
             ),
