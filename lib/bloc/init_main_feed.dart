@@ -27,7 +27,7 @@ void initMainFeed() async {
 
 void initMainFeedWithMocks() async {
   // TODO: see why feed is not loading if there is no delay when sending into the sink
-  await Future.delayed(const Duration(seconds: 2));
+  await Future.delayed(const Duration(milliseconds: 500));
 
   final items = List<FeedItem>.generate(
     100,
@@ -37,8 +37,8 @@ void initMainFeedWithMocks() async {
           "Paris bedbugs: BBC corresopndent goes on the hunt as infestations soar there is a big pandemic going on here manan",
       // articleUrl: "https://sfsdf.com",
       // articleUrl: "::uri.parse fails::",
-      // articleUrl: "uri.parse doesn not fail but url is invalid",
-      articleUrl: "file://sdfs.com",
+      articleUrl: "uri.parse doesn not fail but url is invalid",
+      // articleUrl: "file://sdfs.com",
       feedSourceRssUrl: "http://sdfs.com",
       views: 123,
       likes: 0,

@@ -1,12 +1,8 @@
 import 'dart:developer';
 
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_readrss/components/app_bar.dart';
 import 'package:flutter_readrss/styles/styles.dart';
-import 'package:url_launcher/link.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:url_launcher/url_launcher_string.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 class ArticleWebViewPage extends StatefulWidget {
@@ -20,16 +16,6 @@ class ArticleWebViewPage extends StatefulWidget {
 
 class _ArticleWebViewPageState extends State<ArticleWebViewPage> {
   late final WebViewController _webViewController;
-
-  // TODO: think of a way to show errors to the user, or recover from them somehow
-  // snackbar can't be triggered from the build method
-  void _showWebViewError({String msg = "An unknown error occurred"}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(msg),
-      ),
-    );
-  }
 
   String? _getUrlFromRoute(BuildContext context) {
     return ModalRoute.of(context)?.settings.arguments as String?;
@@ -48,15 +34,6 @@ class _ArticleWebViewPageState extends State<ArticleWebViewPage> {
 
   void _navigateBack() {
     Navigator.of(context).pop();
-  }
-
-  Future<bool> _openUriInExternalApp(Uri uri) async {
-    try {
-      return await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } catch (e) {
-      log("failed to launch uri $uri in external app", error: e);
-      return Future.error(e);
-    }
   }
 
   @override
@@ -99,33 +76,7 @@ class _ArticleWebViewPageState extends State<ArticleWebViewPage> {
                 snapshot.connectionState == ConnectionState.none) {
               if (snapshot.hasError) {
                 // missing uri scheme
-                return Center(
-                  child: SizedBox(
-                    width: 300,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          "Failed to load the article from the article's url.\nYou can try loading it with another app by clicking the link below.\n",
-                          style: textTheme(context).bodyLarge,
-                          textAlign: TextAlign.center,
-                        ),
-                        GestureDetector(
-                          // TODO: handle PlatformException or other Future<false> if it cannot be opened
-                          onTap: () => _openUriInExternalApp(uri),
-                          child: Text(
-                            url,
-                            style: textTheme(context)
-                                .bodyLarge
-                                ?.copyWith(color: Colors.blue),
-                            maxLines: 3,
-                            overflow: TextOverflow.fade,
-                          ),
-                        )
-                      ],
-                    ),
-                  ),
-                );
+                return ArticleWebViewError(url: url!);
               }
 
               // data is ready
@@ -137,6 +88,43 @@ class _ArticleWebViewPageState extends State<ArticleWebViewPage> {
             // this should never be returned
             return nullWidget;
           },
+        ),
+      ),
+    );
+  }
+}
+
+class ArticleWebViewError extends StatelessWidget {
+  const ArticleWebViewError({
+    super.key,
+    required this.url,
+  });
+
+  final String url;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: SizedBox(
+        width: 300,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              "Failed to load the article from the following url:",
+              style: textTheme(context).bodyLarge,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(
+              height: 25,
+            ),
+            Text(
+              url,
+              style:
+                  textTheme(context).bodyLarge?.copyWith(color: Colors.black54),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
       ),
     );

@@ -32,8 +32,9 @@ class _ContainerPageState extends State<ContainerPage> {
   @override
   void initState() {
     super.initState();
-    // initMainFeed();
-    initMainFeedWithMocks();
+    initMainFeed();
+    // TODO: finish testing this
+    // initMainFeedWithMocks();
   }
 
   @override
