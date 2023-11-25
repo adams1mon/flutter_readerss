@@ -50,21 +50,6 @@ class FeedPage extends StatelessWidget {
   }
 }
 
-// final items = List<FeedItem>.generate(
-//     1000,
-//     (i) => FeedItem(
-//           feedSourceTitle: "BBC News",
-//           title:
-//               // "Paris bedbugs: BBC corresopndent goes on the hunt as infestations soar",
-//               "Paris bedbugs: BBC corresopndent goes on the hunt as infestations soar there is a big pandemic going on here manan",
-//           link: "http://google.com",
-//           views: 123,
-//           likes: 0,
-//           description:
-//               "some random description here, lorem ipsum dolor sit amet",
-//           pubDate: DateTime.now(),
-//         ));
-
 class FeedList extends StatelessWidget {
   const FeedList({
     super.key,

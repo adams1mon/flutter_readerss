@@ -48,7 +48,10 @@ android {
         applicationId "com.example.flutter_readrss"
         // You can update the following values to match your application needs.
         // For more information, see: https://docs.flutter.dev/deployment/android#reviewing-the-gradle-build-configuration.
-        minSdkVersion flutter.minSdkVersion
+        
+        // set min sdk version to 27 (android 8.1) instead of default 16 (really old)
+        minSdkVersion 27
+        // minSdkVersion flutter.minSdkVersion
         targetSdkVersion flutter.targetSdkVersion
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName

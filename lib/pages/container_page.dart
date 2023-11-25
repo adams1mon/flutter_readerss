@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_readrss/bloc/feed_bloc.dart';
-import 'package:flutter_readrss/bloc/main_feed_init.dart';
+import 'package:flutter_readrss/bloc/init_main_feed.dart';
 import 'package:flutter_readrss/const/screen_page.dart';
 import 'package:flutter_readrss/pages/feed_page.dart';
 import 'package:flutter_readrss/pages/settings_page.dart';
@@ -32,7 +32,8 @@ class _ContainerPageState extends State<ContainerPage> {
   @override
   void initState() {
     super.initState();
-    initMainFeed();
+    // initMainFeed();
+    initMainFeedWithMocks();
   }
 
   @override
