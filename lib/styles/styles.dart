@@ -25,3 +25,5 @@ OutlinedBorder roundedBorders() {
     Radius.circular(borderRadius),
   ));
 }
+
+const nullWidget = SizedBox.shrink();

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 import 'package:flutter_readrss/model/feed_item.dart';
 import 'package:flutter_readrss/model/feed_source.dart';
 
@@ -31,6 +32,7 @@ class _FeedItemsBloc {
   void addAll(List<FeedItem> items) {
     _feedItems.addAll(items);
     _feedItems.sort(_comparePubDates);
+    log("adding feed items");
     _publish(_feedItems);
   }
 
@@ -84,6 +86,7 @@ class FeedSourcesBloc {
   void add(FeedSource source) {
     if (!_feedSources.any((s) => s.equals(source))) {
       _feedSources.add(source);
+      log("adding feed source ${source.title}");
       _itemsBloc.addAll(source.feedItems);
     }
     _publish(_feedSources);

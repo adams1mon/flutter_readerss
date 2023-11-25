@@ -1,5 +1,8 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_readrss/components/avatars.dart';
+import 'package:flutter_readrss/const/screen_route.dart';
 import 'package:flutter_readrss/model/feed_item.dart';
 import 'package:flutter_readrss/styles/styles.dart';
 
@@ -36,6 +39,14 @@ class _FeedCardState extends State<FeedCard> {
     setState(() => _liked = !_liked);
   }
 
+  void navigateToWebViewPage() {
+    log("navigating to the article's web page");
+    Navigator.of(context).pushNamed(
+      ScreenRoute.webview.route,
+      arguments: widget.feedItem.articleUrl,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -56,6 +67,7 @@ class _FeedCardState extends State<FeedCard> {
               expanded: _expanded,
               liked: _liked,
               toggleLiked: toggleLiked,
+              openUrlInWebView: navigateToWebViewPage,
             ),
           ],
         ),
@@ -95,9 +107,7 @@ class FeedCardHeader extends StatelessWidget {
                   flex: 4,
                   child: Text(
                     feedItem.feedSourceTitle,
-                    style: textTheme(context)
-                        .bodyMedium,
-                        // ?.copyWith(fontWeight: FontWeight.bold),
+                    style: textTheme(context).bodyMedium,
                     overflow: TextOverflow.ellipsis,
                   ),
                 )
@@ -146,12 +156,14 @@ class FeedCardBody extends StatelessWidget {
     required this.expanded,
     required this.liked,
     required this.toggleLiked,
+    required this.openUrlInWebView,
   });
 
   final FeedItem feedItem;
   final bool expanded;
   final bool liked;
   final void Function() toggleLiked;
+  final void Function() openUrlInWebView;
 
   @override
   Widget build(BuildContext context) {
@@ -162,18 +174,26 @@ class FeedCardBody extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.only(bottom: 4.0),
-            child: Text(
-              feedItem.title,
-              style: textTheme(context).bodyLarge?.copyWith(fontWeight: FontWeight.bold),
-              maxLines: expanded ? 4 : 2,
-              overflow: TextOverflow.ellipsis,
+            child: GestureDetector(
+              onTap: openUrlInWebView,
+              child: Text(
+                feedItem.title,
+                style: textTheme(context)
+                    .bodyLarge
+                    ?.copyWith(fontWeight: FontWeight.bold),
+                maxLines: expanded ? 4 : 2,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
           ),
           if (expanded)
             Padding(
               padding: const EdgeInsets.only(top: 12.0),
               child: FeedCardBodyExpandedSection(
-                  feedItem: feedItem, liked: liked, toggleLiked: toggleLiked),
+                feedItem: feedItem,
+                liked: liked,
+                toggleLiked: toggleLiked,
+              ),
             ),
           if (feedItem.pubDate != null)
             Padding(

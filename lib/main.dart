@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_readrss/const/screen_route.dart';
 import 'package:flutter_readrss/pages/container_page.dart';
 import 'package:flutter_readrss/pages/login_page.dart';
+import 'package:flutter_readrss/pages/webview_page.dart';
 import 'package:flutter_readrss/styles/styles.dart';
 
 void main() {
@@ -22,6 +23,7 @@ class MyApp extends StatelessWidget {
           ScreenRoute.main.route: (context) => const ContainerPage(),
           // TODO: create the user account page ? 
           ScreenRoute.user.route: (context) => const Text("User account page here"),
+          ScreenRoute.webview.route: (context) => const ArticleWebViewPage(),
         });
   }
 }
