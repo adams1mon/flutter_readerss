@@ -23,8 +23,6 @@ class MyApp extends StatelessWidget {
           ScreenRoute.main.route: (context) => const ContainerPage(),
           // TODO: create the user account page ? 
           ScreenRoute.user.route: (context) => const Text("User account page here"),
-
-          // TODO: put webview and configure data passing
           ScreenRoute.webview.route: (context) => const ArticleWebViewPage(),
         });
   }

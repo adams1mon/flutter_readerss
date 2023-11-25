@@ -34,11 +34,11 @@ void initMainFeedWithMocks() async {
     (i) => FeedItem(
       feedSourceTitle: "BBC News",
       title:
-          // "Paris bedbugs: BBC corresopndent goes on the hunt as infestations soar",
           "Paris bedbugs: BBC corresopndent goes on the hunt as infestations soar there is a big pandemic going on here manan",
       // articleUrl: "https://sfsdf.com",
       // articleUrl: "::uri.parse fails::",
-      articleUrl: "uri.parse doesn not fail but url is invalid",
+      // articleUrl: "uri.parse doesn not fail but url is invalid",
+      articleUrl: "file://sdfs.com",
       feedSourceRssUrl: "http://sdfs.com",
       views: 123,
       likes: 0,
