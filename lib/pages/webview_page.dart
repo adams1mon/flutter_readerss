@@ -71,7 +71,9 @@ class _ArticleWebViewPageState extends State<ArticleWebViewPage> {
           future: _openUriInWebView(uri),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const CircularProgressIndicator();
+              return const Center(
+                child: CircularProgressIndicator(),
+              );
             } else if (snapshot.connectionState == ConnectionState.done ||
                 snapshot.connectionState == ConnectionState.none) {
               if (snapshot.hasError) {
