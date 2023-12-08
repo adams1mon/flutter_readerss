@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_readrss/model/feed_item.dart';
-import 'package:flutter_readrss/styles/styles.dart';
+import 'package:flutter_readrss/use_case/model/feed_item.dart';
+import 'package:flutter_readrss/presentation/ui/styles/styles.dart';
 
 // for the settings page
 class FeedSource {
@@ -33,6 +33,6 @@ class FeedSource {
 
   bool equals(FeedSource other) {
     return identical(this, other) ||
-        (title == other.title && siteUrl == other.siteUrl);
+        (title == other.title && rssUrl == other.rssUrl);
   }
 }

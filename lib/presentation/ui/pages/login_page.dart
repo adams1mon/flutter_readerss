@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter_readrss/const/screen_route.dart';
-import 'package:flutter_readrss/styles/styles.dart';
+import 'package:flutter_readrss/presentation/ui/pages/screen_route.dart';
+import 'package:flutter_readrss/presentation/ui/styles/styles.dart';
 
 class LoginPage extends StatelessWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -95,6 +95,7 @@ class AuthFormState extends State<AuthForm> {
           email: emailController.text,
           password: passwordController.text,
         );
+        // TODO: fix async gap
         Navigator.pushReplacementNamed(context, ScreenRoute.main.route);
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -113,6 +114,7 @@ class AuthFormState extends State<AuthForm> {
           email: emailController.text,
           password: passwordController.text,
         );
+        // TODO: fix async gap
         Navigator.pushReplacementNamed(context, ScreenRoute.main.route);
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(

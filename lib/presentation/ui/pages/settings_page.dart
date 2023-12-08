@@ -1,17 +1,17 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_readrss/bloc/feed_bloc.dart';
-import 'package:flutter_readrss/components/app_bar.dart';
-import 'package:flutter_readrss/components/avatars.dart';
-import 'package:flutter_readrss/components/help_text.dart';
-import 'package:flutter_readrss/const/screen_page.dart';
+import 'package:flutter_readrss/presentation/state/bloc/feed_bloc.dart';
+import 'package:flutter_readrss/presentation/ui/components/app_bar.dart';
+import 'package:flutter_readrss/presentation/ui/components/avatars.dart';
+import 'package:flutter_readrss/presentation/ui/components/help_text.dart';
 import 'package:flutter_readrss/data/rss_fetcher.dart';
-import 'package:flutter_readrss/model/feed_source.dart';
-import 'package:flutter_readrss/styles/styles.dart';
+import 'package:flutter_readrss/use_case/model/feed_source.dart';
+import 'package:flutter_readrss/presentation/ui/styles/styles.dart';
 import 'package:provider/provider.dart';
 
 import '../components/bottom_navbar.dart';
+import '../const/screen_page.dart';
 import 'container_page.dart';
 
 class SettingsPage extends StatelessWidget {

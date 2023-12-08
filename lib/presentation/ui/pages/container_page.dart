@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_readrss/bloc/feed_bloc.dart';
-import 'package:flutter_readrss/bloc/init_main_feed.dart';
-import 'package:flutter_readrss/const/screen_page.dart';
-import 'package:flutter_readrss/pages/feed_page.dart';
-import 'package:flutter_readrss/pages/settings_page.dart';
+import 'package:flutter_readrss/presentation/state/bloc/feed_bloc.dart';
+import 'package:flutter_readrss/presentation/state/bloc/init_main_feed.dart';
+import 'package:flutter_readrss/presentation/ui/pages/feed_page.dart';
+import 'package:flutter_readrss/presentation/ui/pages/screen_page.dart';
+import 'package:flutter_readrss/presentation/ui/pages/settings_page.dart';
 import 'package:provider/provider.dart';
 
 class ReadrssBottomNavbarNotifier extends ChangeNotifier {
