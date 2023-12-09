@@ -38,53 +38,65 @@ class FeedBookmarkException extends UseCaseException {
   String get exceptionName => "FeedBookmarkException";
 }
 
-abstract class FeedPresentationState {
+abstract class FeedPresenter {
+  // should also add and delete the items of a feed source
   void addFeedSource(FeedSource feedSource);
+  void removeFeedSource(FeedSource feedSource);
+
+  void updateFeedSource(FeedSource feedSource);
+
   void updateFeedItem(FeedItem feedItem);
   void removeFeedItemsBySource(FeedSource feedSource);
 }
 
 abstract class FeedRepository {
-  Future<FeedSource> loadFeedSourceByUrl(String url);
-  Future toggleFeedSource(FeedSource source);
+  Future<FeedSource> getFeedSourceByUrl(String url);
+  Future saveFeedSource(FeedSource source);
+  Future deleteFeedSource(FeedSource source);
+
   Future saveFeedItem(FeedItem item);
+  Future deleteFeedItem(FeedItem item);
 }
 
-class FeedUseCases {
-  FeedUseCases({
-    required FeedPresentationState feedPresentation,
+abstract class BaseFeedUseCases {
+  Future<void> loadFeedSource(String feedUrl);
+  Future<void> bookmarkToggleFeedItem(FeedItem feedItem);
+  Future<void> likeFeedItem(FeedItem feedItem);
+  Future<void> viewFeedItem(FeedItem feedItem);
+}
+
+abstract class PersonalFeedUseCases extends BaseFeedUseCases {
+  Future<void> toggleFeedSource(FeedSource feedSource);
+  Future<void> deleteFeedSource(FeedSource feedSource);
+}
+
+class MainFeedUseCasesImpl implements BaseFeedUseCases {
+  MainFeedUseCasesImpl({
+    required FeedPresenter feedPresentation,
     required FeedRepository feedRepository,
   })  : _feedPresentation = feedPresentation,
         _feedRepository = feedRepository;
 
-  final FeedPresentationState _feedPresentation;
+  final FeedPresenter _feedPresentation;
   final FeedRepository _feedRepository;
 
-  void loadFeed(String feedUrl) async {
+  @override
+  Future<void> loadFeedSource(String feedUrl) async {
     try {
-      final source = await _feedRepository.loadFeedSourceByUrl(feedUrl);
+      final source = await _feedRepository.getFeedSourceByUrl(feedUrl);
       _feedPresentation.addFeedSource(source);
     } catch (e) {
       final msg = "an error occurred while loading the feed from url $feedUrl";
       log(msg);
-      throw FeedLoadException(msg); 
+      throw FeedLoadException(msg);
     }
   }
 
-  void toggleFeedSource(FeedSource source) async {
+  @override
+  Future<void> bookmarkToggleFeedItem(FeedItem item) async {
     try {
-      await _feedRepository.toggleFeedSource(source);
-      _feedPresentation.removeFeedItemsBySource(source);
-    } catch (e) {
-      log("an error occurred while toggleing feed source $source");
-      throw FeedToggleException(); 
-    }
-  }
-
-  void bookmarkFeedItem(FeedItem item) async {
-    try {
+      item.bookmarked = !item.bookmarked;
       await _feedRepository.saveFeedItem(item);
-      item.bookmarked = true;
       _feedPresentation.updateFeedItem(item);
     } catch (e) {
       log("error while bookmarking feed item $item");
@@ -92,11 +104,53 @@ class FeedUseCases {
     }
   }
 
-  void likeFeedItem(FeedItem item) async {
+  @override
+  Future<void> likeFeedItem(FeedItem item) async {
     log("likeFeedItem stub !");
   }
 
-  void viewFeedItem(FeedItem item) async {
+  @override
+  Future<void> viewFeedItem(FeedItem item) async {
     log("viewFeedItem stub !");
+  }
+}
+
+class PersonalFeedUseCasesImpl extends MainFeedUseCasesImpl
+    implements PersonalFeedUseCases {
+  PersonalFeedUseCasesImpl({
+    required FeedPresenter feedPresentation,
+    required FeedRepository feedRepository,
+  }) : super(
+          feedPresentation: feedPresentation,
+          feedRepository: feedRepository,
+        );
+  
+  @override
+  Future<void> toggleFeedSource(FeedSource source) async {
+    try {
+      source.enabled = !source.enabled;
+      await _feedRepository.saveFeedSource(source);
+      
+      if (!source.enabled) {
+        _feedPresentation.removeFeedItemsBySource(source);
+      } else {
+        _feedPresentation.addFeedSource(source);
+      }
+      _feedPresentation.updateFeedSource(source);
+    } catch (e) {
+      log("an error occurred while toggleing feed source $source");
+      throw FeedToggleException();
+    }
+  }
+  
+  @override
+  Future<void> deleteFeedSource(FeedSource source) async {
+    try {
+      await _feedRepository.deleteFeedSource(source);
+      _feedPresentation.removeFeedSource(source);
+    } catch (e) {
+      log("an error occurred while toggleing feed source $source");
+      throw FeedToggleException();
+    }
   }
 }
