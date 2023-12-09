@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter_readrss/presentation/ui/pages/screen_route.dart';
 import 'package:flutter_readrss/presentation/ui/styles/styles.dart';
+
+import '../const/screen_route.dart';
 
 class LoginPage extends StatelessWidget {
   const LoginPage({Key? key}) : super(key: key);

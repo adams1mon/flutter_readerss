@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_readrss/presentation/state/bloc/feed_bloc.dart';
+import 'package:flutter_readrss/data/feed_repository.dart';
 import 'package:flutter_readrss/presentation/state/bloc/init_main_feed.dart';
 import 'package:flutter_readrss/presentation/ui/pages/feed_page.dart';
-import 'package:flutter_readrss/presentation/ui/pages/screen_page.dart';
 import 'package:flutter_readrss/presentation/ui/pages/settings_page.dart';
+import 'package:flutter_readrss/presentation/ui/presenter/feed_presenter.dart';
+import 'package:flutter_readrss/use_case/const/main_rss_feeds.dart';
+import 'package:flutter_readrss/use_case/feeds.dart';
 import 'package:provider/provider.dart';
+
+import '../const/screen_page.dart';
 
 class ReadrssBottomNavbarNotifier extends ChangeNotifier {
   // private state
@@ -20,6 +24,27 @@ class ReadrssBottomNavbarNotifier extends ChangeNotifier {
   int get pageIndex => _pageIndex;
 }
 
+// TODO: include the type of feed in the domain model (default feed, personal feed)
+// based on this we can filter them only in the ui layer
+final repository = FeedRepositoryImpl();
+final mainFeedPresenter = FeedPresenterImpl();
+final personalFeedPresenter = FeedPresenterImpl();
+
+// TODO: do this elsewhere
+final baseFeedUseCases = BaseFeedUseCasesImpl(
+  feedPresenter: mainFeedPresenter, 
+  feedRepository: repository,
+);
+
+final personalFeedUseCases = PersonalFeedUseCasesImpl(
+  feedPresenter: personalFeedPresenter,
+  feedRepository: repository,
+);
+
+final mainFeedProvider = FeedProviderImpl(feedPresenter: mainFeedPresenter);
+final personalFeedProvider = FeedProviderImpl(feedPresenter: personalFeedPresenter);
+final bookmarksFeedProvider = BookmarkFeedProviderImpl(feedProviders: [mainFeedProvider, personalFeedProvider]);
+
 class ContainerPage extends StatefulWidget {
   const ContainerPage({super.key});
 
@@ -32,17 +57,18 @@ class _ContainerPageState extends State<ContainerPage> {
   @override
   void initState() {
     super.initState();
-    initMainFeed();
+    // initMainFeed();
     // TODO: finish testing this
     // initMainFeedWithMocks();
+    baseFeedUseCases.loadFeedSourcesByUrls(mainFeedRssUrls);
   }
 
   @override
   void dispose() {
     super.dispose();
-    mainFeedBloc.dispose();
-    personalFeedBloc.dispose();
-    bookmarksBloc.dispose();
+    mainFeedProvider.dispose();
+    personalFeedProvider.dispose();
+    bookmarksFeedProvider.dispose();
   }
 
   @override
@@ -55,23 +81,30 @@ class _ContainerPageState extends State<ContainerPage> {
           children: [
             FeedPage(
               title: ScreenPage.mainFeed.title,
-              feedItemsStream: mainFeedBloc.itemsStream,
-              bookmarksBloc: bookmarksBloc,
+              feedItemsStream: mainFeedProvider.getFeedItemsStream(),
+              // bookmarksBloc: bookmarksBloc,
+              toggleBookmark: baseFeedUseCases.bookmarkToggleFeedItem,
             ),
             FeedPage(
               title: ScreenPage.personalFeed.title,
-              feedItemsStream: personalFeedBloc.itemsStream,
-              bookmarksBloc: bookmarksBloc,
+              feedItemsStream: personalFeedProvider.getFeedItemsStream(),
+              // bookmarksBloc: bookmarksFeedProvider,
+              toggleBookmark: personalFeedUseCases.bookmarkToggleFeedItem,
             ),
             FeedPage(
               title: ScreenPage.bookmarks.title,
-              feedItemsStream: bookmarksBloc.itemsStream,
-              bookmarksBloc: bookmarksBloc,
+              feedItemsStream: bookmarksFeedProvider.getFeedItemsStream(),
+              // bookmarksBloc: bookmarksFeedProvider,
+              toggleBookmark: baseFeedUseCases.bookmarkToggleFeedItem,
               noItemsText: "Your bookmarked feed items will appear here.",
             ),
             SettingsPage(
-              mainFeedBloc: mainFeedBloc,
-              personalFeedBloc: personalFeedBloc,
+              // mainFeedBloc: mainFeedProvider,
+              // personalFeedBloc: personalFeedProvider,
+              feedSourcesStream: personalFeedProvider.getFeedSourcesStream(),
+              loadFeedSourceByUrl: personalFeedUseCases.loadFeedSourceByUrl,
+              deleteFeedSource: personalFeedUseCases.deleteFeedSource,
+              toggleFeedSource: personalFeedUseCases.toggleFeedSource,
             ),
           ],
         ),

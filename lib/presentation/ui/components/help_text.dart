@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_readrss/styles/styles.dart';
+import 'package:flutter_readrss/presentation/ui/styles/styles.dart';
 
 class HelpText extends StatelessWidget {
   const HelpText({

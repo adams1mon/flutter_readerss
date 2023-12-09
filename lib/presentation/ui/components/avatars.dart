@@ -1,6 +1,6 @@
 
 import 'package:flutter/material.dart';
-import 'package:flutter_readrss/styles/styles.dart';
+import 'package:flutter_readrss/presentation/ui/styles/styles.dart';
 
 // TODO: set default image so it doesn't break
 class Avatar extends StatelessWidget {

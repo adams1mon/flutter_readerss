@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_readrss/presentation/ui/components/avatars.dart';
 
-import '../pages/screen_route.dart';
+import '../const/screen_route.dart';
+
 
 // TODO: get this state from somewhere
 const loggedIn = false;

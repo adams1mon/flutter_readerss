@@ -1,7 +1,7 @@
 import 'dart:developer';
 import 'package:flutter/material.dart';
-import 'package:flutter_readrss/model/feed_item.dart';
-import 'package:flutter_readrss/model/feed_source.dart';
+import 'package:flutter_readrss/use_case/model/feed_item.dart';
+import 'package:flutter_readrss/use_case/model/feed_source.dart';
 import "package:http/http.dart" as http;
 import 'package:webfeed/domain/rss_feed.dart';
 

@@ -1,16 +1,16 @@
 import 'dart:developer';
 
-import 'package:flutter_readrss/bloc/feed_bloc.dart';
-import 'package:flutter_readrss/const/main_rss_feeds.dart';
+import 'package:flutter_readrss/presentation/state/bloc/feed_bloc.dart';
+import 'package:flutter_readrss/use_case/const/main_rss_feeds.dart';
 import 'package:flutter_readrss/data/rss_fetcher.dart';
-import 'package:flutter_readrss/model/feed_item.dart';
-import 'package:flutter_readrss/model/feed_source.dart';
+import 'package:flutter_readrss/use_case/model/feed_item.dart';
+import 'package:flutter_readrss/use_case/model/feed_source.dart';
 
 void initMainFeed() async {
   for (final url in mainFeedRssUrls) {
     try {
       final feedSource = await RssFetcher.fetch(url);
-      mainFeedBloc.add(feedSource);
+      // mainFeedBloc.add(feedSource);
     } on RssFetchException catch (e) {
       log(
         "error while populating default main feed with rss from url: $url",
@@ -48,5 +48,5 @@ void initMainFeedWithMocks() async {
   );
 
   final source = FeedSource(title: "mock", rssUrl: "rssurl", feedItems: items);
-  mainFeedBloc.add(source);
+  // mainFeedBloc.add(source);
 }
