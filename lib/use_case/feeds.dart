@@ -95,6 +95,18 @@ class BaseFeedUseCasesImpl implements BaseFeedUseCases {
     }
   }
 
+  // TODO: solutions for strange bug when bookmarking from one
+  // feed overwrites the other bookmarked items 
+  // only occurs when the same feed is added to both feed pages
+  // and the items from one of them overwrite the items from the other 
+  // one in the presentation layer
+
+  // TODO: 1. whenever a personal feed is added which is 
+  // also a default feed, move the default to the personal feeds 
+  // instead of duplicating
+
+  // TODO: 2. don't allow users to add personal feeds which are
+  // already present as default feeds
   @override
   Future<void> loadFeedSourceByUrl(String feedUrl) async {
     try {

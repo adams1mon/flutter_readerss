@@ -190,7 +190,7 @@ class BookmarkFeedProviderImpl implements FeedProvider {
       // whenever a provider's stream gets an event, update the bookmarked items and publish
       p.getFeedItemsStream().listen((itemsEvent) {
         _updateBookmarkedItems(itemsEvent.feedItems);
-        log(_bookmarkedItems.toString());
+        log("updating bookmarked items: ${_bookmarkedItems.toString()}");
         _publishFeedItems(_bookmarkedItems);
       });
     }
@@ -201,7 +201,9 @@ class BookmarkFeedProviderImpl implements FeedProvider {
       final alreadyPresent = _bookmarkedItems.containsKey(item.articleUrl);
       if (item.bookmarked && !alreadyPresent) {
         _bookmarkedItems[item.articleUrl] = item;
+        log("update bookmark items with ${item.articleUrl}");
       } else if (!item.bookmarked && alreadyPresent) {
+        log("removing bookmarked item ${item.articleUrl}");
         _bookmarkedItems.remove(item.articleUrl);
       }
     }
