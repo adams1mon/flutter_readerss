@@ -4,6 +4,7 @@ import 'package:flutter_readrss/data/rss_fetcher.dart';
 import 'package:flutter_readrss/use_case/feeds.dart';
 import 'package:flutter_readrss/use_case/model/feed_item.dart';
 import 'package:flutter_readrss/use_case/model/feed_source.dart';
+import 'package:flutter_readrss/use_case/model/feed_source_type.dart';
 
 class FeedRepositoryImpl implements FeedRepository {
   @override
@@ -21,10 +22,13 @@ class FeedRepositoryImpl implements FeedRepository {
   }
 
   @override
-  Future<FeedSource> getFeedSourceByUrl(String url) {
+  Future<FeedSource> getFeedSourceByUrl(
+    String url,
+    FeedSourceType feedSourceType,
+  ) {
     // TODO: implement getFeedSourceByUrl
     log("repo get source by url stub");
-    return RssFetcher.fetch(url);
+    return RssFetcher.fetch(url, feedSourceType);
   }
 
   @override

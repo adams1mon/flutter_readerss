@@ -1,0 +1,4 @@
+enum FeedSourceType {
+  predefined,
+  personal
+}

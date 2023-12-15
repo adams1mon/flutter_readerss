@@ -85,13 +85,17 @@ class FeedList extends StatelessWidget {
     return StreamBuilder<FeedItemsEvent>(
       stream: feedItemStream,
       builder: (context, snapshot) {
+        log("FeedList: consuming items event: ${snapshot}");
         if (snapshot.hasError) {
           log("error when consuming from stream, ${snapshot.error}");
           return const Text("An unknown error occurred.");
         } else if (!snapshot.hasData || snapshot.data!.feedItems.isEmpty) {
+          log("FeedList: empty feeditems");
           return HelpText(text: noItemsText);
         } else {
           final items = snapshot.data!.feedItems;
+
+          log("FeedList: adding items to listview: ${items}");
           
           return ListView.builder(
             itemCount: items.length,
