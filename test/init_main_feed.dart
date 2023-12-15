@@ -1,6 +1,5 @@
 import 'dart:developer';
 
-import 'package:flutter_readrss/presentation/state/bloc/feed_bloc.dart';
 import 'package:flutter_readrss/use_case/const/main_rss_feeds.dart';
 import 'package:flutter_readrss/data/rss_fetcher.dart';
 import 'package:flutter_readrss/use_case/model/feed_item.dart';

@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_readrss/data/feed_repository.dart';
-import 'package:flutter_readrss/presentation/state/bloc/init_main_feed.dart';
 import 'package:flutter_readrss/presentation/ui/pages/feed_page.dart';
 import 'package:flutter_readrss/presentation/ui/pages/settings_page.dart';
-import 'package:flutter_readrss/presentation/ui/presenter/feed_presenter.dart';
+import 'package:flutter_readrss/presentation/presenter/feed_presenter.dart';
 import 'package:flutter_readrss/use_case/const/main_rss_feeds.dart';
 import 'package:flutter_readrss/use_case/feeds.dart';
 import 'package:provider/provider.dart';
@@ -24,16 +23,16 @@ class ReadrssBottomNavbarNotifier extends ChangeNotifier {
   int get pageIndex => _pageIndex;
 }
 
-// TODO: include the type of feed in the domain model (default feed, personal feed)
-// based on this we can filter them only in the ui layer
+// TODO: do this wiring elsewhere
 final repository = FeedRepositoryImpl();
-// final mainFeedPresenter = FeedPresenterImpl();
-// final personalFeedPresenter = FeedPresenterImpl();
 
-final mainFeedProvider = FeedProviderImpl2();
-final personalFeedProvider = FeedProviderImpl2();
+final mainFeedProvider = FeedProviderImpl();
+final personalFeedProvider = FeedProviderImpl();
+final bookmarksFeedProvider = BookmarkFeedProviderImpl(
+  feedProviders: [mainFeedProvider, personalFeedProvider],
+);
 
-final presenter = FeedPresenterImpl2(
+final presenter = FeedPresenterImpl(
   mainFeedProvider: mainFeedProvider,
   personalFeedProvider: personalFeedProvider,
 );
@@ -42,22 +41,6 @@ final useCases = FeedUseCasesImpl(
   feedPresenter: presenter,
   feedRepository: repository,
 );
-
-// TODO: do this elsewhere
-// final baseFeedUseCases = BaseFeedUseCasesImpl(
-//   feedPresenter: mainFeedPresenter,
-//   feedRepository: repository,
-// );
-
-// final personalFeedUseCases = PersonalFeedUseCasesImpl(
-//   feedPresenter: personalFeedPresenter,
-//   feedRepository: repository,
-// );
-
-// final mainFeedProvider = FeedProviderImpl(feedPresenter: mainFeedPresenter);
-// final personalFeedProvider = FeedProviderImpl(feedPresenter: personalFeedPresenter);
-final bookmarksFeedProvider = BookmarkFeedProviderImpl(
-    feedProviders: [mainFeedProvider, personalFeedProvider]);
 
 class ContainerPage extends StatefulWidget {
   const ContainerPage({super.key});
@@ -70,10 +53,8 @@ class _ContainerPageState extends State<ContainerPage> {
   @override
   void initState() {
     super.initState();
-    // initMainFeed();
-    // TODO: finish testing this
+    // TODO: finish testing this -> should be 
     // initMainFeedWithMocks();
-    // baseFeedUseCases.loadFeedSourcesByUrls(mainFeedRssUrls);
     useCases.loadFeedSourcesByUrls(mainFeedRssUrls);
   }
 
@@ -96,32 +77,21 @@ class _ContainerPageState extends State<ContainerPage> {
             FeedPage(
               title: ScreenPage.mainFeed.title,
               feedItemsStream: mainFeedProvider.getFeedItemsStream(),
-              // bookmarksBloc: bookmarksBloc,
-              // toggleBookmark: baseFeedUseCases.bookmarkToggleFeedItem,
               toggleBookmark: useCases.bookmarkToggleFeedItem,
             ),
             FeedPage(
               title: ScreenPage.personalFeed.title,
               feedItemsStream: personalFeedProvider.getFeedItemsStream(),
-              // bookmarksBloc: bookmarksFeedProvider,
-              // toggleBookmark: personalFeedUseCases.bookmarkToggleFeedItem,
               toggleBookmark: useCases.bookmarkToggleFeedItem,
             ),
             FeedPage(
               title: ScreenPage.bookmarks.title,
               feedItemsStream: bookmarksFeedProvider.getFeedItemsStream(),
-              // bookmarksBloc: bookmarksFeedProvider,
-              // toggleBookmark: baseFeedUseCases.bookmarkToggleFeedItem,
               toggleBookmark: useCases.bookmarkToggleFeedItem,
               noItemsText: "Your bookmarked feed items will appear here.",
             ),
             SettingsPage(
-              // mainFeedBloc: mainFeedProvider,
-              // personalFeedBloc: personalFeedProvider,
               feedSourcesStream: personalFeedProvider.getFeedSourcesStream(),
-              // loadFeedSourceByUrl: personalFeedUseCases.loadFeedSourceByUrl,
-              // deleteFeedSource: personalFeedUseCases.deleteFeedSource,
-              // toggleFeedSource: personalFeedUseCases.toggleFeedSource,
               loadFeedSourceByUrl: useCases.loadFeedSourceByUrl,
               deleteFeedSource: useCases.deleteFeedSource,
               toggleFeedSource: useCases.toggleFeedSource,

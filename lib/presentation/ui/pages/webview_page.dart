@@ -78,7 +78,7 @@ class _ArticleWebViewPageState extends State<ArticleWebViewPage> {
                 snapshot.connectionState == ConnectionState.none) {
               if (snapshot.hasError) {
                 // missing uri scheme
-                return ArticleWebViewError(url: url!);
+                return ArticleWebViewError(url: url);
               }
 
               // data is ready

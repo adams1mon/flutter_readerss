@@ -74,118 +74,7 @@ class BookmarkFeedProviderImpl implements FeedProvider {
   }
 }
 
-// called by the use cases
-// class FeedPresenterImpl implements FeedPresenter {
-//   final _feedSources = <String, FeedSource>{};
-//   final _feedItems = <String, List<FeedItem>>{};
-
-//   final _sourcesController = StreamController<FeedSourcesEvent>.broadcast();
-//   Stream<FeedSourcesEvent> get sourcesStream => _sourcesController.stream;
-
-//   final _itemsController = StreamController<FeedItemsEvent>.broadcast();
-//   Stream<FeedItemsEvent> get itemsStream => _itemsController.stream;
-
-//   @override
-//   void addFeedSource(FeedSource source) {
-//     if (!_feedSources.containsKey(source.rssUrl)) {
-//       log("adding feed source ${source.title}");
-//       _feedSources[source.rssUrl] = source;
-//       _publishFeedSources(_feedSources);
-//     }
-
-//     if (!_feedItems.containsKey(source.rssUrl)) {
-//       log("adding feed items for source ${source.title}");
-//       _feedItems[source.rssUrl] = source.feedItems;
-//       _publishFeedItems(_feedItems);
-//     }
-//   }
-
-//   @override
-//   void removeFeedSource(FeedSource source) {
-//     log("removing feed source ${source.title}");
-//     _feedSources.remove(source.rssUrl);
-
-//     log("removing feed items for source ${source.title}");
-//     _feedItems.remove(source.rssUrl);
-//   }
-
-//   @override
-//   void updateFeedSource(FeedSource source) {
-//     log("updating feed source ${source.title}");
-//     _feedSources[source.rssUrl] = source;
-//     _publishFeedSources(_feedSources);
-
-//     log("updating feed items for source ${source.title}");
-//     _feedItems[source.rssUrl] = source.feedItems;
-//     _publishFeedItems(_feedItems);
-//   }
-
-//   @override
-//   void removeFeedItemsBySource(FeedSource source) {
-//     if (_feedItems.remove(source.rssUrl) != null) {
-//       _publishFeedItems(_feedItems);
-//     }
-//   }
-
-//   @override
-//   void updateFeedItem(FeedItem feedItem) {
-//     if (!_feedItems.containsKey(feedItem.feedSourceRssUrl)) {
-//       return;
-//     }
-
-//     final items = _feedItems[feedItem.feedSourceRssUrl];
-//     final index = items
-//         ?.indexWhere((element) => element.articleUrl == feedItem.articleUrl);
-
-//     if (index == -1) {
-//       return;
-//     }
-//     items?[index!] = feedItem;
-//     _publishFeedItems(_feedItems);
-//   }
-
-//   void _publishFeedSources(Map<String, FeedSource> sources) {
-//     _sourcesController.sink.add(
-//         FeedSourcesEvent(feedSources: sources.values.toList(growable: false)));
-//   }
-
-//   void _publishFeedItems(Map<String, List<FeedItem>> items) {
-//     _itemsController.sink.add(FeedItemsEvent(
-//         feedItems: items.values
-//             .expand((itemList) => itemList)
-//             .toList(growable: false)));
-//   }
-
-//   dispose() {
-//     _sourcesController.close();
-//     _itemsController.close();
-//   }
-// }
-
-// class BookmarksBloc {
-//   final _itemsBloc = _FeedItemsBloc();
-//   Stream<FeedItemsEvent> get itemsStream => _itemsBloc.itemsStream;
-
-//   void toggleBookmarked(FeedItem item) {
-//     item.bookmarked = !item.bookmarked;
-//     if (item.bookmarked) {
-//       _itemsBloc.add(item);
-//     } else {
-//       _itemsBloc.delete(item);
-//     }
-//   }
-
-//   dispose() {
-//     _itemsBloc.dispose();
-//   }
-// }
-
-// // TODO: do this elsewhere
-// final mainFeedProvider = FeedProviderImpl();
-// final personalFeedProvider = FeedProviderImpl();
-// final bookmarksFeedProvider = FeedProviderImpl();
-
-class FeedProviderImpl2 implements FeedProvider {
+class FeedProviderImpl implements FeedProvider {
   final _feedSources = <String, FeedSource>{};
   final _feedItems = <String, Map<String, FeedItem>>{};
 
@@ -260,20 +149,17 @@ class FeedProviderImpl2 implements FeedProvider {
       return;
     }
 
+    log("FeedProvider: updating feed item ${feedItem.articleUrl}");
     _feedItems[feedItem.feedSourceRssUrl]![feedItem.articleUrl] = feedItem;
     _publishFeedItems(_feedItems);
   }
 
   void _publishFeedSources(Map<String, FeedSource> sources) {
-    var s = sources.values.toList();
-    log("presenter: source list: ${s}");
     _sourcesController.sink.add(
         FeedSourcesEvent(feedSources: sources.values.toList(growable: false)));
   }
 
   void _publishFeedItems(Map<String, Map<String, FeedItem>> items) {
-    final s = items.values.expand((element) => element.values).toList();
-    log("presenter: items list: ${s}");
     _itemsController.sink.add(FeedItemsEvent(
         feedItems: items.values
             .expand((mapEntry) => mapEntry.values)
@@ -282,20 +168,19 @@ class FeedProviderImpl2 implements FeedProvider {
 }
 
 // called by the use cases
-class FeedPresenterImpl2 implements FeedPresenter {
-  final FeedProviderImpl2 _mainFeedProvider;
-  final FeedProviderImpl2 _personalFeedProvider;
+class FeedPresenterImpl implements FeedPresenter {
+  final FeedProviderImpl _mainFeedProvider;
+  final FeedProviderImpl _personalFeedProvider;
 
-  FeedPresenterImpl2({
-    required FeedProviderImpl2 mainFeedProvider,
-    required FeedProviderImpl2 personalFeedProvider,
+  FeedPresenterImpl({
+    required FeedProviderImpl mainFeedProvider,
+    required FeedProviderImpl personalFeedProvider,
   })  : _mainFeedProvider = mainFeedProvider,
         _personalFeedProvider = personalFeedProvider;
 
   @override
   void addFeedSource(FeedSource source) {
     log("FeedPresenter: adding feed source ${source.title}");
-    log("feeds: ${source.feedItems}");
     switch (source.type) {
       case FeedSourceType.predefined:
         _mainFeedProvider.addFeedSource(source);
@@ -306,7 +191,7 @@ class FeedPresenterImpl2 implements FeedPresenter {
 
   @override
   void removeFeedSource(FeedSource source) {
-    log("updating feed source ${source.title}");
+    log("FeedPresenter: removing feed source ${source.title}");
     switch (source.type) {
       case FeedSourceType.predefined:
         _mainFeedProvider.removeFeedSource(source);
@@ -317,7 +202,7 @@ class FeedPresenterImpl2 implements FeedPresenter {
 
   @override
   void updateFeedSource(FeedSource source) {
-    log("updating feed source ${source.title}");
+    log("FeedPresenter: updating feed source ${source.title}");
     switch (source.type) {
       case FeedSourceType.predefined:
         _mainFeedProvider.updateFeedSource(source);
@@ -328,6 +213,7 @@ class FeedPresenterImpl2 implements FeedPresenter {
 
   @override
   void removeFeedItemsBySource(FeedSource source) {
+    log("FeedPresenter: removing feed items by source ${source.title}");
     switch (source.type) {
       case FeedSourceType.predefined:
         _mainFeedProvider.removeFeedItemsBySource(source);
@@ -338,7 +224,8 @@ class FeedPresenterImpl2 implements FeedPresenter {
 
   @override
   void updateFeedItem(FeedItem feedItem) {
-    // update should occur in every feed
+    log("FeedPresenter: updating feed item ${feedItem.articleUrl}");
+    // item update must occur in every feed
     // so we have a consistent UI
     _mainFeedProvider.updateFeedItem(feedItem);
     _personalFeedProvider.updateFeedItem(feedItem);

@@ -5,7 +5,7 @@ import 'package:flutter_readrss/presentation/ui/components/app_bar.dart';
 import 'package:flutter_readrss/presentation/ui/components/avatars.dart';
 import 'package:flutter_readrss/presentation/ui/components/help_text.dart';
 import 'package:flutter_readrss/data/rss_fetcher.dart';
-import 'package:flutter_readrss/presentation/ui/presenter/feed_presenter.dart';
+import 'package:flutter_readrss/presentation/presenter/feed_presenter.dart';
 import 'package:flutter_readrss/use_case/model/feed_source.dart';
 import 'package:flutter_readrss/presentation/ui/styles/styles.dart';
 import 'package:flutter_readrss/use_case/model/feed_source_type.dart';

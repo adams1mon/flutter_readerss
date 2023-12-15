@@ -6,7 +6,7 @@ import 'package:flutter_readrss/presentation/ui/components/bottom_navbar.dart';
 import 'package:flutter_readrss/presentation/ui/components/feed_card.dart';
 import 'package:flutter_readrss/presentation/ui/components/help_text.dart';
 import 'package:flutter_readrss/presentation/ui/pages/container_page.dart';
-import 'package:flutter_readrss/presentation/ui/presenter/feed_presenter.dart';
+import 'package:flutter_readrss/presentation/presenter/feed_presenter.dart';
 import 'package:flutter_readrss/presentation/ui/styles/styles.dart';
 import 'package:flutter_readrss/use_case/model/feed_item.dart';
 import 'package:provider/provider.dart';
@@ -16,17 +16,12 @@ class FeedPage extends StatelessWidget {
     super.key,
     required this.title,
     required this.feedItemsStream,
-    // required this.personalFeedUseCases,
     required this.toggleBookmark,
-    
-    // required this.bookmarksBloc,
     this.noItemsText = "It seems like there are no feeds.\nTry to add some or enable them on the settings page!",
   });
 
   final String title;
   final Stream<FeedItemsEvent> feedItemsStream;
-  // final FeedProvider bookmarksBloc;
-  // final PersonalFeedUseCases personalFeedUseCases;
   final String noItemsText;
 
   final void Function(FeedItem) toggleBookmark;
@@ -49,8 +44,6 @@ class FeedPage extends StatelessWidget {
       body: Center(
         child: FeedList(
           feedItemStream: feedItemsStream,
-          // bookmarksBloc: bookmarksBloc,
-          // personalFeedUseCases: personalFeedUseCases,
           noItemsText: noItemsText,
           toggleBookmark: toggleBookmark,
         ),
@@ -63,21 +56,12 @@ class FeedList extends StatelessWidget {
   const FeedList({
     super.key,
     required this.feedItemStream,
-    // required this.bookmarksBloc,
-
-    // required this.personalFeedUseCases,
-
     required this.noItemsText,
     required this.toggleBookmark,
   });
 
   final Stream<FeedItemsEvent> feedItemStream;
-  // final FeedProvider bookmarksBloc;
-
-  // final PersonalFeedUseCases personalFeedUseCases;
-
   final String noItemsText;
-
   final void Function(FeedItem) toggleBookmark;
 
   @override
@@ -85,18 +69,13 @@ class FeedList extends StatelessWidget {
     return StreamBuilder<FeedItemsEvent>(
       stream: feedItemStream,
       builder: (context, snapshot) {
-        log("FeedList: consuming items event: ${snapshot}");
         if (snapshot.hasError) {
-          log("error when consuming from stream, ${snapshot.error}");
           return const Text("An unknown error occurred.");
         } else if (!snapshot.hasData || snapshot.data!.feedItems.isEmpty) {
-          log("FeedList: empty feeditems");
           return HelpText(text: noItemsText);
         } else {
           final items = snapshot.data!.feedItems;
 
-          log("FeedList: adding items to listview: ${items}");
-          
           return ListView.builder(
             itemCount: items.length,
             itemBuilder: (context, index) {
@@ -104,10 +83,7 @@ class FeedList extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 4.0),
                 child: FeedCard(
                   feedItem: items[index],
-                  toggleBookmarked: () =>
-                      // bookmarksBloc.toggleBookmarked(items[index]),
-                      // personalFeedUseCases.bookmarkToggleFeedItem(items[index])
-                      toggleBookmark(items[index])
+                  toggleBookmarked: () => toggleBookmark(items[index])
                 ),
               );
             },
