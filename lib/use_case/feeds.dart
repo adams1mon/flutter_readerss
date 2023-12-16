@@ -40,31 +40,23 @@ class FeedBookmarkException extends UseCaseException {
 }
 
 abstract class FeedPresenter {
-  // should also add and delete the items of a feed source
-  void addFeedSource(FeedSource feedSource);
+  void setFeed(FeedSource feedSource, List<FeedItem> feedItems);
   void removeFeedSource(FeedSource feedSource);
-
-  void updateFeedSource(FeedSource feedSource);
-
   void updateFeedItem(FeedItem feedItem);
-  void removeFeedItemsBySource(FeedSource feedSource);
 }
 
 abstract class FeedRepository {
-  Future<FeedSource> getFeedSourceByUrl(
-    String url,
-    FeedSourceType feedSourceType,
-  );
+  Future<(FeedSource, List<FeedItem>)> getFeedByUrl(
+      String url, FeedType feedType);
   Future saveFeedSource(FeedSource source);
   Future deleteFeedSource(FeedSource source);
-
   Future saveFeedItem(FeedItem item);
   Future deleteFeedItem(FeedItem item);
 }
 
 abstract class FeedUseCases {
-  Future<void> loadFeedSourcesByUrls(List<String> feedUrls);
-  Future<void> loadFeedSourceByUrl(String feedUrl);
+  Future<void> loadPredefinedFeedsByUrls(List<String> feedUrls);
+  Future<void> loadPersonalFeedSourceByUrl(String feedUrl);
   Future<void> toggleFeedSource(FeedSource feedSource);
   Future<void> deleteFeedSource(FeedSource feedSource);
   Future<void> bookmarkToggleFeedItem(FeedItem feedItem);
@@ -83,15 +75,15 @@ class FeedUseCasesImpl implements FeedUseCases {
   final FeedRepository _feedRepository;
 
   @override
-  Future<void> loadFeedSourcesByUrls(List<String> feedUrls) async {
+  Future<void> loadPredefinedFeedsByUrls(List<String> feedUrls) async {
     for (final url in feedUrls) {
       try {
-        final source = await _feedRepository.getFeedSourceByUrl(
+        final (feedSource, feedItems) = await _feedRepository.getFeedByUrl(
           url,
-          FeedSourceType.predefined,
+          FeedType.predefined,
         );
         // TODO: this could be done more efficiently
-        _feedPresenter.addFeedSource(source);
+        _feedPresenter.setFeed(feedSource, feedItems);
       } catch (e) {
         log("an error occurred while loading the feed from url $url", error: e);
       }
@@ -117,13 +109,13 @@ class FeedUseCasesImpl implements FeedUseCases {
   // needs to be shown on multiple presentation pages
 
   @override
-  Future<void> loadFeedSourceByUrl(String feedUrl) async {
+  Future<void> loadPersonalFeedSourceByUrl(String feedUrl) async {
     try {
-      final source = await _feedRepository.getFeedSourceByUrl(
+      final (feedSource, feedItems) = await _feedRepository.getFeedByUrl(
         feedUrl,
-        FeedSourceType.personal,
+        FeedType.personal,
       );
-      _feedPresenter.addFeedSource(source);
+      _feedPresenter.setFeed(feedSource, feedItems);
     } catch (e) {
       final msg = "an error occurred while loading the feed from url $feedUrl";
       log(msg, error: e);
@@ -138,11 +130,14 @@ class FeedUseCasesImpl implements FeedUseCases {
       await _feedRepository.saveFeedSource(source);
 
       if (!source.enabled) {
-        _feedPresenter.removeFeedItemsBySource(source);
+        _feedPresenter.setFeed(source, []);
       } else {
-        _feedPresenter.addFeedSource(source);
+        final (feedSource, feedItems) = await _feedRepository.getFeedByUrl(
+          source.rssUrl,
+          source.type,
+        );
+        _feedPresenter.setFeed(feedSource, feedItems);
       }
-      _feedPresenter.updateFeedSource(source);
     } catch (e) {
       log("an error occurred while toggleing feed source $source", error: e);
       throw FeedToggleException();
@@ -153,6 +148,7 @@ class FeedUseCasesImpl implements FeedUseCases {
   Future<void> deleteFeedSource(FeedSource source) async {
     try {
       await _feedRepository.deleteFeedSource(source);
+      _feedPresenter.setFeed(source, []);
       _feedPresenter.removeFeedSource(source);
     } catch (e) {
       log("an error occurred while toggleing feed source $source", error: e);

@@ -55,7 +55,7 @@ class _ContainerPageState extends State<ContainerPage> {
     super.initState();
     // TODO: finish testing this -> should be 
     // initMainFeedWithMocks();
-    useCases.loadFeedSourcesByUrls(mainFeedRssUrls);
+    useCases.loadPredefinedFeedsByUrls(mainFeedRssUrls);
   }
 
   @override
@@ -92,7 +92,7 @@ class _ContainerPageState extends State<ContainerPage> {
             ),
             SettingsPage(
               feedSourcesStream: personalFeedProvider.getFeedSourcesStream(),
-              loadFeedSourceByUrl: useCases.loadFeedSourceByUrl,
+              loadFeedByUrl: useCases.loadPersonalFeedSourceByUrl,
               deleteFeedSource: useCases.deleteFeedSource,
               toggleFeedSource: useCases.toggleFeedSource,
             ),

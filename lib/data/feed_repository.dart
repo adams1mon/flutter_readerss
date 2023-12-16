@@ -22,13 +22,9 @@ class FeedRepositoryImpl implements FeedRepository {
   }
 
   @override
-  Future<FeedSource> getFeedSourceByUrl(
-    String url,
-    FeedSourceType feedSourceType,
-  ) {
-    // TODO: implement getFeedSourceByUrl
-    log("repo get source by url stub");
-    return RssFetcher.fetch(url, feedSourceType);
+  Future<(FeedSource, List<FeedItem>)> getFeedByUrl(String url, FeedType feedType) {
+    // TODO: error handling
+    return RssFetcher.fetch(url, feedType);
   }
 
   @override

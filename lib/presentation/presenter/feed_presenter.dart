@@ -97,46 +97,31 @@ class FeedProviderImpl implements FeedProvider {
     _itemsController.close();
   }
 
-  // added methods
-  void addFeedSource(FeedSource source) {
-    if (!_feedSources.containsKey(source.rssUrl)) {
-      log("FeedProvider: adding feed source ${source.title}");
-      _feedSources[source.rssUrl] = source;
-      _publishFeedSources(_feedSources);
-    }
+  void setFeedSource(FeedSource source) {
+    log("FeedProvider: adding feed source ${source.title}");
+    _feedSources[source.rssUrl] = source;
+    _publishFeedSources(_feedSources);
+  }
 
-    if (!_feedItems.containsKey(source.rssUrl)) {
-      log("FeedProvider: adding feed items for source ${source.title}");
-      _feedItems[source.rssUrl] = Map.fromEntries(
-        source.feedItems.map(
+  void setFeedItems(String rssUrl, List<FeedItem> feedItems) {
+    if (feedItems.isEmpty) {
+      log("FeedProvider: adding EMPTY items for source $rssUrl");
+      _feedItems.remove(rssUrl);
+    } else {
+      log("FeedProvider: adding items for source $rssUrl");
+      _feedItems[rssUrl] = Map.fromEntries(
+        feedItems.map(
           (e) => MapEntry<String, FeedItem>(e.articleUrl, e),
         ),
       );
-      _publishFeedItems(_feedItems);
     }
+    _publishFeedItems(_feedItems);
   }
 
   void removeFeedSource(FeedSource source) {
     log("FeedProvider: removing feed source ${source.title}");
     _feedSources.remove(source.rssUrl);
     _publishFeedSources(_feedSources);
-
-    log("FeedProvider: removing feed items for source ${source.title}");
-    _feedItems.remove(source.rssUrl);
-    _publishFeedItems(_feedItems);
-  }
-
-  void updateFeedSource(FeedSource source) {
-    log("FeedProvider: updating feed source ${source.title}");
-    _feedSources[source.rssUrl] = source;
-    _publishFeedSources(_feedSources);
-  }
-
-  void removeFeedItemsBySource(FeedSource source) {
-    log("FeedProvider: removing feed items by source ${source.title}");
-    if (_feedItems.remove(source.rssUrl) != null) {
-      _publishFeedItems(_feedItems);
-    }
   }
 
   void updateFeedItem(FeedItem feedItem) {
@@ -179,13 +164,15 @@ class FeedPresenterImpl implements FeedPresenter {
         _personalFeedProvider = personalFeedProvider;
 
   @override
-  void addFeedSource(FeedSource source) {
-    log("FeedPresenter: adding feed source ${source.title}");
+  void setFeed(FeedSource source, List<FeedItem> items) {
+    log("FeedPresenter: adding feed source ${source.title} and items");
     switch (source.type) {
-      case FeedSourceType.predefined:
-        _mainFeedProvider.addFeedSource(source);
-      case FeedSourceType.personal:
-        _personalFeedProvider.addFeedSource(source);
+      case FeedType.predefined:
+        _mainFeedProvider.setFeedSource(source);
+        _mainFeedProvider.setFeedItems(source.rssUrl, items);
+      case FeedType.personal:
+        _personalFeedProvider.setFeedSource(source);
+        _personalFeedProvider.setFeedItems(source.rssUrl, items);
     }
   }
 
@@ -193,32 +180,10 @@ class FeedPresenterImpl implements FeedPresenter {
   void removeFeedSource(FeedSource source) {
     log("FeedPresenter: removing feed source ${source.title}");
     switch (source.type) {
-      case FeedSourceType.predefined:
+      case FeedType.predefined:
         _mainFeedProvider.removeFeedSource(source);
-      case FeedSourceType.personal:
+      case FeedType.personal:
         _personalFeedProvider.removeFeedSource(source);
-    }
-  }
-
-  @override
-  void updateFeedSource(FeedSource source) {
-    log("FeedPresenter: updating feed source ${source.title}");
-    switch (source.type) {
-      case FeedSourceType.predefined:
-        _mainFeedProvider.updateFeedSource(source);
-      case FeedSourceType.personal:
-        _personalFeedProvider.updateFeedSource(source);
-    }
-  }
-
-  @override
-  void removeFeedItemsBySource(FeedSource source) {
-    log("FeedPresenter: removing feed items by source ${source.title}");
-    switch (source.type) {
-      case FeedSourceType.predefined:
-        _mainFeedProvider.removeFeedItemsBySource(source);
-      case FeedSourceType.personal:
-        _personalFeedProvider.removeFeedItemsBySource(source);
     }
   }
 

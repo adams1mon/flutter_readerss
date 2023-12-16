@@ -33,8 +33,10 @@ class _RssParseException extends BaseException {
 }
 
 class RssFetcher {
-  static Future<FeedSource> fetch(
-      String url, FeedSourceType feedSourceType) async {
+  static Future<(FeedSource, List<FeedItem>)> fetch(
+    String url,
+    FeedType feedSourceType,
+  ) async {
     log('trying to parse $url');
     var uri = Uri.tryParse(url);
     if (uri == null) {
@@ -58,10 +60,10 @@ class RssFetcher {
     }
   }
 
-  static FeedSource _parseRssText({
+  static (FeedSource, List<FeedItem>) _parseRssText({
     required String url,
     required String rssText,
-    required FeedSourceType feedSourceType,
+    required FeedType feedSourceType,
   }) {
     log('trying to parse rss feed');
 
@@ -84,7 +86,8 @@ class RssFetcher {
 
     final feedItems = _createFeedItems(feed, url, feedImage);
 
-    return FeedSource(
+    return (
+      FeedSource(
         title: feed.title!,
         siteUrl: feed.link,
         rssUrl: url,
@@ -92,20 +95,25 @@ class RssFetcher {
         image: feedImage,
         enabled: true,
         ttl: feed.ttl,
-        feedItems: feedItems);
+      ),
+      feedItems
+    );
   }
 
-  static Set<FeedItem> _createFeedItems(
-      RssFeed feed, String rssUrl, Image? feedSourceImage) {
-    final feedItems = <FeedItem>{};
+  static List<FeedItem> _createFeedItems(
+    RssFeed feed,
+    String rssUrl,
+    Image? feedSourceImage,
+  ) {
+    final feedItems = <FeedItem>[];
 
     if (feed.items == null) {
       return feedItems;
     }
 
     feedItems.addAll(feed.items!
-      .where((rssItem) => rssItem.title != null && rssItem.link != null)
-      .map(
+        .where((rssItem) => rssItem.title != null && rssItem.link != null)
+        .map(
       (rssItem) {
         // TODO: fetch views, likes and if the user liked the feed item from the backend
 

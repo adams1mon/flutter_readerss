@@ -9,12 +9,10 @@ class FeedSource {
   final String rssUrl;
   final String siteUrl;
   bool enabled;
-  FeedSourceType type;
+  FeedType type;
 
   final Image image;
   final int ttl;
-
-  final Set<FeedItem> feedItems;
 
   FeedSource({
     required this.title,
@@ -27,7 +25,6 @@ class FeedSource {
     Set<FeedItem>? feedItems,
   })  : siteUrl = siteUrl ?? "",
         image = image ?? defaultFeedImage,
-        feedItems = feedItems ?? <FeedItem>{},
         ttl = ttl ?? 10;
 
   void toggleEnabled() {
