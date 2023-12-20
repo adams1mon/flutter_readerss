@@ -1,10 +1,9 @@
 import 'dart:developer';
 
 import 'package:flutter_readrss/data/rss_fetcher.dart';
-import 'package:flutter_readrss/use_case/feeds.dart';
+import 'package:flutter_readrss/use_case/feed_repository.dart';
 import 'package:flutter_readrss/use_case/model/feed_item.dart';
 import 'package:flutter_readrss/use_case/model/feed_source.dart';
-import 'package:flutter_readrss/use_case/model/feed_source_type.dart';
 
 class FeedRepositoryImpl implements FeedRepository {
   @override

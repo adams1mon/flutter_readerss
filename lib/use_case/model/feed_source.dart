@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_readrss/use_case/model/feed_item.dart';
 import 'package:flutter_readrss/presentation/ui/styles/styles.dart';
-import 'package:flutter_readrss/use_case/model/feed_source_type.dart';
 
 // for the settings page
 class FeedSource {
@@ -35,4 +34,9 @@ class FeedSource {
     return identical(this, other) ||
         (title == other.title && rssUrl == other.rssUrl);
   }
+}
+
+enum FeedType {
+  predefined,
+  personal
 }

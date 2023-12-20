@@ -1,12 +1,10 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
+import 'package:flutter_readrss/presentation/presenter/feed_events.dart';
 import 'package:flutter_readrss/presentation/ui/components/app_bar.dart';
 import 'package:flutter_readrss/presentation/ui/components/bottom_navbar.dart';
 import 'package:flutter_readrss/presentation/ui/components/feed_card.dart';
 import 'package:flutter_readrss/presentation/ui/components/help_text.dart';
 import 'package:flutter_readrss/presentation/ui/pages/container_page.dart';
-import 'package:flutter_readrss/presentation/presenter/feed_presenter.dart';
 import 'package:flutter_readrss/presentation/ui/styles/styles.dart';
 import 'package:flutter_readrss/use_case/model/feed_item.dart';
 import 'package:provider/provider.dart';

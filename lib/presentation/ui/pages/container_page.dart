@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_readrss/data/feed_repository.dart';
+import 'package:flutter_readrss/di.dart';
 import 'package:flutter_readrss/presentation/ui/pages/feed_page.dart';
 import 'package:flutter_readrss/presentation/ui/pages/settings_page.dart';
-import 'package:flutter_readrss/presentation/presenter/feed_presenter.dart';
 import 'package:flutter_readrss/use_case/const/main_rss_feeds.dart';
-import 'package:flutter_readrss/use_case/feeds.dart';
 import 'package:provider/provider.dart';
 
 import '../const/screen_page.dart';
@@ -23,24 +21,6 @@ class ReadrssBottomNavbarNotifier extends ChangeNotifier {
   int get pageIndex => _pageIndex;
 }
 
-// TODO: do this wiring elsewhere
-final repository = FeedRepositoryImpl();
-
-final mainFeedProvider = FeedProviderImpl();
-final personalFeedProvider = FeedProviderImpl();
-final bookmarksFeedProvider = BookmarkFeedProviderImpl(
-  feedProviders: [mainFeedProvider, personalFeedProvider],
-);
-
-final presenter = FeedPresenterImpl(
-  mainFeedProvider: mainFeedProvider,
-  personalFeedProvider: personalFeedProvider,
-);
-
-final useCases = FeedUseCasesImpl(
-  feedPresenter: presenter,
-  feedRepository: repository,
-);
 
 class ContainerPage extends StatefulWidget {
   const ContainerPage({super.key});

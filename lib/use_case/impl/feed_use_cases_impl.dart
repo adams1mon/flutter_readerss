@@ -1,68 +1,12 @@
+
 import 'dart:developer';
 
+import 'package:flutter_readrss/use_case/exceptions/use_case_exceptions.dart';
+import 'package:flutter_readrss/use_case/feed_presenter.dart';
+import 'package:flutter_readrss/use_case/feed_repository.dart';
+import 'package:flutter_readrss/use_case/feed_use_cases.dart';
 import 'package:flutter_readrss/use_case/model/feed_item.dart';
 import 'package:flutter_readrss/use_case/model/feed_source.dart';
-import 'package:flutter_readrss/use_case/model/feed_source_type.dart';
-
-class UseCaseException implements Exception {
-  final dynamic message;
-  final String exceptionName = "UseCaseException";
-
-  UseCaseException([this.message]);
-
-  @override
-  String toString() {
-    Object? message = this.message;
-    if (message == null) return exceptionName;
-    return "$exceptionName: $message";
-  }
-}
-
-class FeedLoadException extends UseCaseException {
-  FeedLoadException([super.message]);
-
-  @override
-  String get exceptionName => "FeedLoadException";
-}
-
-class FeedToggleException extends UseCaseException {
-  FeedToggleException([super.message]);
-
-  @override
-  String get exceptionName => "FeedToggleException";
-}
-
-class FeedBookmarkException extends UseCaseException {
-  FeedBookmarkException([super.message]);
-
-  @override
-  String get exceptionName => "FeedBookmarkException";
-}
-
-abstract class FeedPresenter {
-  void setFeed(FeedSource feedSource, List<FeedItem> feedItems);
-  void removeFeedSource(FeedSource feedSource);
-  void updateFeedItem(FeedItem feedItem);
-}
-
-abstract class FeedRepository {
-  Future<(FeedSource, List<FeedItem>)> getFeedByUrl(
-      String url, FeedType feedType);
-  Future saveFeedSource(FeedSource source);
-  Future deleteFeedSource(FeedSource source);
-  Future saveFeedItem(FeedItem item);
-  Future deleteFeedItem(FeedItem item);
-}
-
-abstract class FeedUseCases {
-  Future<void> loadPredefinedFeedsByUrls(List<String> feedUrls);
-  Future<void> loadPersonalFeedSourceByUrl(String feedUrl);
-  Future<void> toggleFeedSource(FeedSource feedSource);
-  Future<void> deleteFeedSource(FeedSource feedSource);
-  Future<void> bookmarkToggleFeedItem(FeedItem feedItem);
-  Future<void> likeFeedItem(FeedItem feedItem);
-  Future<void> viewFeedItem(FeedItem feedItem);
-}
 
 class FeedUseCasesImpl implements FeedUseCases {
   FeedUseCasesImpl({
