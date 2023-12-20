@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_readrss/bloc/feed_bloc.dart';
-import 'package:flutter_readrss/bloc/init_main_feed.dart';
-import 'package:flutter_readrss/const/screen_page.dart';
-import 'package:flutter_readrss/pages/feed_page.dart';
-import 'package:flutter_readrss/pages/settings_page.dart';
+import 'package:flutter_readrss/di.dart';
+import 'package:flutter_readrss/presentation/ui/pages/feed_page.dart';
+import 'package:flutter_readrss/presentation/ui/pages/settings_page.dart';
+import 'package:flutter_readrss/use_case/const/main_rss_feeds.dart';
 import 'package:provider/provider.dart';
+
+import '../const/screen_page.dart';
 
 class ReadrssBottomNavbarNotifier extends ChangeNotifier {
   // private state
@@ -20,6 +21,7 @@ class ReadrssBottomNavbarNotifier extends ChangeNotifier {
   int get pageIndex => _pageIndex;
 }
 
+
 class ContainerPage extends StatefulWidget {
   const ContainerPage({super.key});
 
@@ -28,21 +30,20 @@ class ContainerPage extends StatefulWidget {
 }
 
 class _ContainerPageState extends State<ContainerPage> {
-
   @override
   void initState() {
     super.initState();
-    initMainFeed();
-    // TODO: finish testing this
+    // TODO: finish testing this -> should be 
     // initMainFeedWithMocks();
+    useCases.loadPredefinedFeedsByUrls(mainFeedRssUrls);
   }
 
   @override
   void dispose() {
     super.dispose();
-    mainFeedBloc.dispose();
-    personalFeedBloc.dispose();
-    bookmarksBloc.dispose();
+    mainFeedProvider.dispose();
+    personalFeedProvider.dispose();
+    bookmarksFeedProvider.dispose();
   }
 
   @override
@@ -55,23 +56,25 @@ class _ContainerPageState extends State<ContainerPage> {
           children: [
             FeedPage(
               title: ScreenPage.mainFeed.title,
-              feedItemsStream: mainFeedBloc.itemsStream,
-              bookmarksBloc: bookmarksBloc,
+              feedItemsStream: mainFeedProvider.getFeedItemsStream(),
+              toggleBookmark: useCases.bookmarkToggleFeedItem,
             ),
             FeedPage(
               title: ScreenPage.personalFeed.title,
-              feedItemsStream: personalFeedBloc.itemsStream,
-              bookmarksBloc: bookmarksBloc,
+              feedItemsStream: personalFeedProvider.getFeedItemsStream(),
+              toggleBookmark: useCases.bookmarkToggleFeedItem,
             ),
             FeedPage(
               title: ScreenPage.bookmarks.title,
-              feedItemsStream: bookmarksBloc.itemsStream,
-              bookmarksBloc: bookmarksBloc,
+              feedItemsStream: bookmarksFeedProvider.getFeedItemsStream(),
+              toggleBookmark: useCases.bookmarkToggleFeedItem,
               noItemsText: "Your bookmarked feed items will appear here.",
             ),
             SettingsPage(
-              mainFeedBloc: mainFeedBloc,
-              personalFeedBloc: personalFeedBloc,
+              feedSourcesStream: personalFeedProvider.getFeedSourcesStream(),
+              loadFeedByUrl: useCases.loadPersonalFeedSourceByUrl,
+              deleteFeedSource: useCases.deleteFeedSource,
+              toggleFeedSource: useCases.toggleFeedSource,
             ),
           ],
         ),

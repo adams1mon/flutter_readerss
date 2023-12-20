@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_readrss/components/avatars.dart';
-import 'package:flutter_readrss/const/screen_route.dart';
+import 'package:flutter_readrss/presentation/ui/components/avatars.dart';
+
+import '../const/screen_route.dart';
+
 
 // TODO: get this state from somewhere
 const loggedIn = false;
@@ -20,7 +22,6 @@ class ReadrssAppBar extends AppBar {
                             context,
                             ScreenRoute.user.route,
                           ),
-                      // TODO: get the profile pic of the logged in user
                       child:
                           UserAvatar(image: Image.asset("assets/avatar.jpg")))
                   : TextButton(

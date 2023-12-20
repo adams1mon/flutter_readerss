@@ -1,13 +1,12 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
-import 'package:flutter_readrss/bloc/feed_bloc.dart';
-import 'package:flutter_readrss/components/app_bar.dart';
-import 'package:flutter_readrss/components/bottom_navbar.dart';
-import 'package:flutter_readrss/components/feed_card.dart';
-import 'package:flutter_readrss/components/help_text.dart';
-import 'package:flutter_readrss/pages/container_page.dart';
-import 'package:flutter_readrss/styles/styles.dart';
+import 'package:flutter_readrss/presentation/presenter/feed_events.dart';
+import 'package:flutter_readrss/presentation/ui/components/app_bar.dart';
+import 'package:flutter_readrss/presentation/ui/components/bottom_navbar.dart';
+import 'package:flutter_readrss/presentation/ui/components/feed_card.dart';
+import 'package:flutter_readrss/presentation/ui/components/help_text.dart';
+import 'package:flutter_readrss/presentation/ui/pages/container_page.dart';
+import 'package:flutter_readrss/presentation/ui/styles/styles.dart';
+import 'package:flutter_readrss/use_case/model/feed_item.dart';
 import 'package:provider/provider.dart';
 
 class FeedPage extends StatelessWidget {
@@ -15,14 +14,15 @@ class FeedPage extends StatelessWidget {
     super.key,
     required this.title,
     required this.feedItemsStream,
-    required this.bookmarksBloc,
+    required this.toggleBookmark,
     this.noItemsText = "It seems like there are no feeds.\nTry to add some or enable them on the settings page!",
   });
 
   final String title;
   final Stream<FeedItemsEvent> feedItemsStream;
-  final BookmarksBloc bookmarksBloc;
   final String noItemsText;
+
+  final void Function(FeedItem) toggleBookmark;
 
   @override
   Widget build(BuildContext context) {
@@ -42,8 +42,8 @@ class FeedPage extends StatelessWidget {
       body: Center(
         child: FeedList(
           feedItemStream: feedItemsStream,
-          bookmarksBloc: bookmarksBloc,
           noItemsText: noItemsText,
+          toggleBookmark: toggleBookmark,
         ),
       ),
     );
@@ -54,13 +54,13 @@ class FeedList extends StatelessWidget {
   const FeedList({
     super.key,
     required this.feedItemStream,
-    required this.bookmarksBloc,
     required this.noItemsText,
+    required this.toggleBookmark,
   });
 
   final Stream<FeedItemsEvent> feedItemStream;
-  final BookmarksBloc bookmarksBloc;
   final String noItemsText;
+  final void Function(FeedItem) toggleBookmark;
 
   @override
   Widget build(BuildContext context) {
@@ -68,13 +68,12 @@ class FeedList extends StatelessWidget {
       stream: feedItemStream,
       builder: (context, snapshot) {
         if (snapshot.hasError) {
-          log("error when consuming from stream, ${snapshot.error}");
           return const Text("An unknown error occurred.");
         } else if (!snapshot.hasData || snapshot.data!.feedItems.isEmpty) {
           return HelpText(text: noItemsText);
         } else {
           final items = snapshot.data!.feedItems;
-          
+
           return ListView.builder(
             itemCount: items.length,
             itemBuilder: (context, index) {
@@ -82,8 +81,7 @@ class FeedList extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 4.0),
                 child: FeedCard(
                   feedItem: items[index],
-                  toggleBookmarked: () =>
-                      bookmarksBloc.toggleBookmarked(items[index]),
+                  toggleBookmarked: () => toggleBookmark(items[index])
                 ),
               );
             },

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_readrss/const/screen_page.dart';
-import 'package:flutter_readrss/styles/styles.dart';
+import 'package:flutter_readrss/presentation/ui/styles/styles.dart';
+
+import '../const/screen_page.dart';
+
 
 class ReadrssBottomNavbar extends BottomNavigationBar {
   ReadrssBottomNavbar({

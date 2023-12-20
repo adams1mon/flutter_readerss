@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_readrss/const/screen_route.dart';
-import 'package:flutter_readrss/styles/styles.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_readrss/presentation/ui/styles/styles.dart';
+
+import '../const/screen_route.dart';
 
 class LoginPage extends StatelessWidget {
-  const LoginPage({super.key});
+  const LoginPage({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -15,9 +17,7 @@ class LoginPage extends StatelessWidget {
 }
 
 class MainContainer extends StatelessWidget {
-  const MainContainer({
-    super.key,
-  });
+  const MainContainer({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -36,9 +36,7 @@ class MainContainer extends StatelessWidget {
 }
 
 class MainContent extends StatelessWidget {
-  const MainContent({
-    super.key,
-  });
+  const MainContent({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -46,64 +44,96 @@ class MainContent extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
         TitleText(),
-        LoginForm(),
+        AuthForm(),
       ],
     );
   }
 }
 
 class TitleText extends StatelessWidget {
-  const TitleText({
-    super.key,
-  });
+  const TitleText({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(40),
-      child: Text("ReadRss",
-          style: TextStyle(
-            color: colors(context).primary,
-            fontSize: 55,
-            fontWeight: FontWeight.bold,
-            fontFamily: "Arial",
-          )),
+      child: Text(
+        "ReadRss",
+        style: TextStyle(
+          color: colors(context).primary,
+          fontSize: 55,
+          fontWeight: FontWeight.bold,
+          fontFamily: "Arial",
+        ),
+      ),
     );
   }
 }
 
-// Define a custom Form widget.
-class LoginForm extends StatefulWidget {
-  const LoginForm({super.key});
+class AuthForm extends StatefulWidget {
+  const AuthForm({Key? key}) : super(key: key);
 
   @override
-  LoginFormState createState() {
-    return LoginFormState();
-  }
+  AuthFormState createState() => AuthFormState();
 }
 
-class LoginFormState extends State<LoginForm> {
+class AuthFormState extends State<AuthForm> {
   final _formKey = GlobalKey<FormState>();
+  final emailController = TextEditingController();
+  final passwordController = TextEditingController();
 
-  onLoginPressed() {
-    // Validate returns true if the form is valid, or false otherwise.
+  @override
+  void dispose() {
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> onLoginPressed() async {
     if (_formKey.currentState!.validate()) {
-      // If the form is valid, display a snackbar. In the real world,
-      // you'd often call a server or save the information in a database.
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Processing Data')),
-      );
+      try {
+        await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: emailController.text,
+          password: passwordController.text,
+        );
+        // TODO: fix async gap
+        Navigator.pushReplacementNamed(context, ScreenRoute.main.route);
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Login failed. Check your credentials.'),
+          ),
+        );
+      }
     }
   }
 
-  // TODO: set guest login state here
-  onGuestLoginPressed() {
+  Future<void> onRegisterPressed() async {
+    if (_formKey.currentState!.validate()) {
+      try {
+        await FirebaseAuth.instance.createUserWithEmailAndPassword(
+          email: emailController.text,
+          password: passwordController.text,
+        );
+        // TODO: fix async gap
+        Navigator.pushReplacementNamed(context, ScreenRoute.main.route);
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content:
+                Text('Registration failed. Try a different email or password.'),
+          ),
+        );
+      }
+    }
+  }
+
+  void onGuestLoginPressed() {
     Navigator.pushReplacementNamed(context, ScreenRoute.main.route);
   }
 
   @override
   Widget build(BuildContext context) {
-    // Build a Form widget using the _formKey created above.
     return Form(
       key: _formKey,
       child: Padding(
@@ -112,14 +142,18 @@ class LoginFormState extends State<LoginForm> {
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
-            const Padding(
-              padding: EdgeInsets.all(10.0),
-              child: FormInputContainer(),
+            Padding(
+              padding: const EdgeInsets.all(10.0),
+              child: FormInputContainer(
+                emailController: emailController,
+                passwordController: passwordController,
+              ),
             ),
             Padding(
               padding: const EdgeInsets.all(10.0),
-              child: FormButtonContainer(
+              child: AuthButtonContainer(
                 onLoginPressed: onLoginPressed,
+                onRegisterPressed: onRegisterPressed,
                 onGuestLoginPressed: onGuestLoginPressed,
               ),
             ),
@@ -130,15 +164,19 @@ class LoginFormState extends State<LoginForm> {
   }
 }
 
-class FormButtonContainer extends StatelessWidget {
-  const FormButtonContainer({
-    super.key,
+class AuthButtonContainer extends StatelessWidget {
+  const AuthButtonContainer({
+    Key? key,
     required void Function()? onLoginPressed,
-    required Function() onGuestLoginPressed,
+    required void Function()? onRegisterPressed,
+    required void Function()? onGuestLoginPressed,
   })  : _onLoginPressed = onLoginPressed,
-        _onGuestLoginPressed = onGuestLoginPressed;
+        _onRegisterPressed = onRegisterPressed,
+        _onGuestLoginPressed = onGuestLoginPressed,
+        super(key: key);
 
   final void Function()? _onLoginPressed;
+  final void Function()? _onRegisterPressed;
   final void Function()? _onGuestLoginPressed;
 
   @override
@@ -155,6 +193,16 @@ class FormButtonContainer extends StatelessWidget {
           ),
           child: const Text('Login'),
         ),
+        ElevatedButton(
+          onPressed: _onRegisterPressed,
+          style: ElevatedButton.styleFrom(
+            shape: roundedBorders(),
+            backgroundColor: colors(context).primary,
+            foregroundColor: colors(context).onPrimary,
+            minimumSize: const Size(340, 40),
+          ),
+          child: const Text('Register'),
+        ),
         OutlinedButton(
           onPressed: _onGuestLoginPressed,
           style: OutlinedButton.styleFrom(
@@ -170,26 +218,17 @@ class FormButtonContainer extends StatelessWidget {
   }
 }
 
-class FormInputContainer extends StatefulWidget {
+class FormInputContainer extends StatelessWidget {
   const FormInputContainer({
-    super.key,
-  });
+    Key? key,
+    required TextEditingController emailController,
+    required TextEditingController passwordController,
+  })  : _emailController = emailController,
+        _passwordController = passwordController,
+        super(key: key);
 
-  @override
-  State<FormInputContainer> createState() => _FormInputContainerState();
-}
-
-class _FormInputContainerState extends State<FormInputContainer> {
-  final emailController = TextEditingController();
-  final passwordController = TextEditingController();
-
-  // dispose of the controller objects
-  @override
-  void dispose() {
-    emailController.dispose();
-    passwordController.dispose();
-    super.dispose();
-  }
+  final TextEditingController _emailController;
+  final TextEditingController _passwordController;
 
   @override
   Widget build(BuildContext context) {
@@ -197,7 +236,7 @@ class _FormInputContainerState extends State<FormInputContainer> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         TextFormField(
-          controller: emailController,
+          controller: _emailController,
           validator: (value) {
             if (value == null || value.isEmpty) {
               return 'Please enter some text';
@@ -218,7 +257,7 @@ class _FormInputContainerState extends State<FormInputContainer> {
           height: 10,
         ),
         TextFormField(
-          controller: passwordController,
+          controller: _passwordController,
           validator: (value) {
             if (value == null || value.isEmpty) {
               return 'Please enter some text';

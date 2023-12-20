@@ -1,7 +1,7 @@
 import 'dart:developer';
 import 'package:flutter/material.dart';
-import 'package:flutter_readrss/model/feed_item.dart';
-import 'package:flutter_readrss/model/feed_source.dart';
+import 'package:flutter_readrss/use_case/model/feed_item.dart';
+import 'package:flutter_readrss/use_case/model/feed_source.dart';
 import "package:http/http.dart" as http;
 import 'package:webfeed/domain/rss_feed.dart';
 
@@ -17,7 +17,7 @@ class BaseException implements Exception {
 
 // user-facing exceptions
 class RssFetchException extends BaseException {
-  RssFetchException(String msg, [Object? cause]): super(msg, cause);
+  RssFetchException(String msg, [Object? cause]) : super(msg, cause);
 
   @override
   String toString() => "RssFetchException: $msg";
@@ -25,16 +25,17 @@ class RssFetchException extends BaseException {
 
 // internal exception
 class _RssParseException extends BaseException {
-  _RssParseException(String msg, [Object? cause]): super(msg, cause);
+  _RssParseException(String msg, [Object? cause]) : super(msg, cause);
 
   @override
   String toString() => "_RssParseException: $msg";
 }
 
 class RssFetcher {
-
-  static Future<FeedSource> fetch(String url) async {
-
+  static Future<(FeedSource, List<FeedItem>)> fetch(
+    String url,
+    FeedType feedSourceType,
+  ) async {
     log('trying to parse $url');
     var uri = Uri.tryParse(url);
     if (uri == null) {
@@ -44,19 +45,25 @@ class RssFetcher {
 
     try {
       var response = await http.get(uri);
-      return _parseRssText(url: url, rssText: response.body);
-
+      return _parseRssText(
+        url: url,
+        rssText: response.body,
+        feedSourceType: feedSourceType,
+      );
     } on _RssParseException catch (e) {
       log("failed to parse rss text", error: e);
       throw RssFetchException("Failed to parse RSS. Check the XML.");
-
     } catch (e) {
       log("failed to fetch and parse rss feed", error: e);
       throw RssFetchException("An error occurred. Check the URL.");
     }
   }
 
-  static FeedSource _parseRssText({required String url, required String rssText}) {
+  static (FeedSource, List<FeedItem>) _parseRssText({
+    required String url,
+    required String rssText,
+    required FeedType feedSourceType,
+  }) {
     log('trying to parse rss feed');
 
     RssFeed feed;
@@ -72,47 +79,57 @@ class RssFetcher {
 
     // TODO: maybe check the image url so unexpected errors are caught here
     // not on upper layers when trying to display the image
-    final feedImage = feed.image?.url?.isNotEmpty == true ? Image.network(feed.image!.url!) : null;
-    
+    final feedImage = feed.image?.url?.isNotEmpty == true
+        ? Image.network(feed.image!.url!)
+        : null;
+
     final feedItems = _createFeedItems(feed, url, feedImage);
 
-    return FeedSource(
+    return (
+      FeedSource(
         title: feed.title!,
         siteUrl: feed.link,
         rssUrl: url,
+        type: feedSourceType,
         image: feedImage,
         enabled: true,
         ttl: feed.ttl,
-        feedItems: feedItems);
+      ),
+      feedItems
+    );
   }
 
-  static List<FeedItem> _createFeedItems(RssFeed feed, String rssUrl, Image? feedSourceImage) {
+  static List<FeedItem> _createFeedItems(
+    RssFeed feed,
+    String rssUrl,
+    Image? feedSourceImage,
+  ) {
     final feedItems = <FeedItem>[];
-    
+
     if (feed.items == null) {
       return feedItems;
     }
 
     feedItems.addAll(feed.items!
-        .where(
-            (rssItem) => rssItem.title != null && rssItem.link != null)
-        .map((rssItem) {
+        .where((rssItem) => rssItem.title != null && rssItem.link != null)
+        .map(
+      (rssItem) {
+        // TODO: fetch views, likes and if the user liked the feed item from the backend
 
-      // TODO: fetch views, likes and if the user liked the feed item from the backend
-      
-      return FeedItem(
-        feedSourceTitle: feed.title!,
-        feedSourceRssUrl: rssUrl,
-        title: rssItem.title!,
-        views: 42, // TODO: fetch this
-        likes: 42, // TODO: fetch this
-        liked: false, // TODO: fetch this
-        description: rssItem.description,
-        articleUrl: rssItem.link!,
-        sourceIcon: feedSourceImage,
-        pubDate: rssItem.pubDate,
-      );
-    }).toList());
+        return FeedItem(
+          feedSourceTitle: feed.title!,
+          feedSourceRssUrl: rssUrl,
+          title: rssItem.title!,
+          views: 42, // TODO: fetch this
+          likes: 42, // TODO: fetch this
+          liked: false, // TODO: fetch this
+          description: rssItem.description,
+          articleUrl: rssItem.link!,
+          sourceIcon: feedSourceImage,
+          pubDate: rssItem.pubDate,
+        );
+      },
+    ));
 
     return feedItems;
   }

@@ -1,37 +1,50 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_readrss/bloc/feed_bloc.dart';
-import 'package:flutter_readrss/components/app_bar.dart';
-import 'package:flutter_readrss/components/avatars.dart';
-import 'package:flutter_readrss/components/help_text.dart';
-import 'package:flutter_readrss/const/screen_page.dart';
-import 'package:flutter_readrss/data/rss_fetcher.dart';
-import 'package:flutter_readrss/model/feed_source.dart';
-import 'package:flutter_readrss/styles/styles.dart';
+import 'package:flutter_readrss/presentation/presenter/feed_events.dart';
+import 'package:flutter_readrss/presentation/ui/components/app_bar.dart';
+import 'package:flutter_readrss/presentation/ui/components/avatars.dart';
+import 'package:flutter_readrss/presentation/ui/components/help_text.dart';
+import 'package:flutter_readrss/use_case/exceptions/use_case_exceptions.dart';
+import 'package:flutter_readrss/use_case/model/feed_source.dart';
+import 'package:flutter_readrss/presentation/ui/styles/styles.dart';
 import 'package:provider/provider.dart';
 
 import '../components/bottom_navbar.dart';
+import '../const/screen_page.dart';
 import 'container_page.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({
     super.key,
-    required this.mainFeedBloc,
-    required this.personalFeedBloc,
+    // required this.mainFeedBloc,
+    // required this.personalFeedBloc,
+    required this.feedSourcesStream,
+    required this.loadFeedByUrl,
+    required this.deleteFeedSource,
+    required this.toggleFeedSource,
   });
 
-  final FeedSourcesBloc mainFeedBloc;
-  final FeedSourcesBloc personalFeedBloc;
+  // final FeedSourcesBloc mainFeedBloc;
+  // final FeedSourcesBloc personalFeedBloc;
 
-  void launchAddFeedDialog(BuildContext context, FeedSourcesBloc feedBloc) {
+  final Stream<FeedSourcesEvent> feedSourcesStream;
+  // final PersonalFeedUseCases personalFeedUseCases;
+
+  final Future<void> Function(String) loadFeedByUrl;
+  final Future<void> Function(FeedSource) deleteFeedSource;
+  final Future<void> Function(FeedSource) toggleFeedSource;
+
+  // void launchAddFeedDialog(BuildContext context, FeedSourcesBloc feedBloc) {
+  void launchAddFeedDialog(BuildContext context) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return Center(
           child: SingleChildScrollView(
             child: AddFeedSourceDialog(
-              feedBloc: feedBloc,
+              // feedBloc: feedBloc,
+              loadFeedByUrl: loadFeedByUrl,
             ),
           ),
         );
@@ -60,9 +73,11 @@ class SettingsPage extends StatelessWidget {
               flex: 1,
               child: FeedSourcesContainer(
                 listTitle: "Personal Feed List",
-                feedBloc: personalFeedBloc,
-                launchAddFeedDialog: () =>
-                    launchAddFeedDialog(context, personalFeedBloc),
+                // feedBloc: personalFeedBloc,
+                feedSourcesStream: feedSourcesStream,
+                deleteFeedSource: deleteFeedSource,
+                toggleFeedSource: toggleFeedSource,
+                launchAddFeedDialog: () => launchAddFeedDialog(context),
               ),
             ),
           ],
@@ -82,12 +97,21 @@ class FeedSourcesContainer extends StatelessWidget {
   const FeedSourcesContainer({
     super.key,
     required this.listTitle,
-    required this.feedBloc,
+    // required this.feedBloc,
+
+    required this.feedSourcesStream,
+    required this.deleteFeedSource,
+    required this.toggleFeedSource,
     required this.launchAddFeedDialog,
   });
 
+  final Stream<FeedSourcesEvent> feedSourcesStream;
+
+  final Future<void> Function(FeedSource) deleteFeedSource;
+  final Future<void> Function(FeedSource) toggleFeedSource;
+
   final String listTitle;
-  final FeedSourcesBloc feedBloc;
+  // final FeedSourcesBloc feedBloc;
   final void Function() launchAddFeedDialog;
 
   @override
@@ -103,7 +127,10 @@ class FeedSourcesContainer extends StatelessWidget {
           Expanded(
             flex: 1,
             child: FeedSourceList(
-              feedBloc: feedBloc,
+              // feedBloc: feedBloc,
+              feedSourcesStream: feedSourcesStream,
+              removeFeedSource: deleteFeedSource,
+              toggleFeedSource: toggleFeedSource,
             ),
           ),
           Padding(
@@ -129,10 +156,12 @@ class FeedSourcesContainer extends StatelessWidget {
 class AddFeedSourceDialog extends StatefulWidget {
   const AddFeedSourceDialog({
     super.key,
-    required this.feedBloc,
+    // required this.feedBloc,
+    required this.loadFeedByUrl,
   });
 
-  final FeedSourcesBloc feedBloc;
+  // final FeedSourcesBloc feedBloc;
+  final Future<void> Function(String) loadFeedByUrl;
 
   @override
   State<AddFeedSourceDialog> createState() => _AddFeedSourceDialogState();
@@ -164,14 +193,12 @@ class _AddFeedSourceDialogState extends State<AddFeedSourceDialog> {
 
     var url = _textController.text;
 
-    RssFetcher.fetch(url).then((feedSource) {
-      widget.feedBloc.add(feedSource);
+    widget.loadFeedByUrl(url).then((_) {
       clearLoading();
       Navigator.of(context).pop();
-    },
-    onError: (err) {
-      setFeedSourceError((err as RssFetchException).msg);
-    });  
+    }, onError: (err) {
+      setFeedSourceError((err as UseCaseException).message);
+    });
   }
 
   @override
@@ -247,26 +274,27 @@ class FeedSourceListTitle extends StatelessWidget {
 class FeedSourceList extends StatelessWidget {
   const FeedSourceList({
     super.key,
-    required this.feedBloc,
+    // required this.feedBloc,
+    required this.feedSourcesStream,
+    required this.removeFeedSource,
+    required this.toggleFeedSource,
     this.noItemsText =
         "It seems like there are no feed sources.\nTry to add some below!",
   });
 
-  final FeedSourcesBloc feedBloc;
+
+  final Stream<FeedSourcesEvent> feedSourcesStream;
+
+  final Future<void> Function(FeedSource) removeFeedSource;
+  final Future<void> Function(FeedSource) toggleFeedSource;
+
   final String noItemsText;
-
-  void removeSource(FeedSource source) {
-    feedBloc.delete(source);
-  }
-
-  void toggleSource(FeedSource source) {
-    feedBloc.toggleEnabled(source);
-  }
 
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<FeedSourcesEvent>(
-      stream: feedBloc.sourcesStream,
+      // stream: feedBloc.sourcesStream,
+      stream: feedSourcesStream,
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           log("error when consuming from stream, ${snapshot.error}");
@@ -275,6 +303,7 @@ class FeedSourceList extends StatelessWidget {
           return HelpText(text: noItemsText);
         } else {
           final sources = snapshot.data!.feedSources;
+          log("UI got sources: $sources");
 
           return ListView.builder(
             itemCount: sources.length,
@@ -284,8 +313,8 @@ class FeedSourceList extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 8.0),
                 child: FeedSourceListTile(
                   feedSource: source,
-                  removeSource: () => removeSource(sources[index]),
-                  toggleSource: () => toggleSource(sources[index]),
+                  removeSource: () async => await removeFeedSource(sources[index]),
+                  toggleSource: () async => await toggleFeedSource(sources[index]),
                 ),
               );
             },
@@ -307,8 +336,8 @@ class FeedSourceListTile extends StatelessWidget {
 
   final FeedSource feedSource;
 
-  final void Function() removeSource;
-  final void Function() toggleSource;
+  final Future<void> Function() removeSource;
+  final Future<void> Function() toggleSource;
 
   @override
   Widget build(BuildContext context) {
