@@ -41,9 +41,9 @@ class _ContainerPageState extends State<ContainerPage> {
   @override
   void dispose() {
     super.dispose();
-    mainFeedProvider.dispose();
-    personalFeedProvider.dispose();
-    bookmarksFeedProvider.dispose();
+    mainFeedConnector.dispose();
+    personalFeedConnector.dispose();
+    bookmarksFeedConnector.dispose();
   }
 
   @override
@@ -56,22 +56,22 @@ class _ContainerPageState extends State<ContainerPage> {
           children: [
             FeedPage(
               title: ScreenPage.mainFeed.title,
-              feedItemsStream: mainFeedProvider.getFeedItemsStream(),
+              feedItemsStream: mainFeedConnector.getFeedItemsStream(),
               toggleBookmark: useCases.bookmarkToggleFeedItem,
             ),
             FeedPage(
               title: ScreenPage.personalFeed.title,
-              feedItemsStream: personalFeedProvider.getFeedItemsStream(),
+              feedItemsStream: personalFeedConnector.getFeedItemsStream(),
               toggleBookmark: useCases.bookmarkToggleFeedItem,
             ),
             FeedPage(
               title: ScreenPage.bookmarks.title,
-              feedItemsStream: bookmarksFeedProvider.getFeedItemsStream(),
+              feedItemsStream: bookmarksFeedConnector.getFeedItemsStream(),
               toggleBookmark: useCases.bookmarkToggleFeedItem,
               noItemsText: "Your bookmarked feed items will appear here.",
             ),
             SettingsPage(
-              feedSourcesStream: personalFeedProvider.getFeedSourcesStream(),
+              feedSourcesStream: personalFeedConnector.getFeedSourcesStream(),
               loadFeedByUrl: useCases.loadPersonalFeedSourceByUrl,
               deleteFeedSource: useCases.deleteFeedSource,
               toggleFeedSource: useCases.toggleFeedSource,

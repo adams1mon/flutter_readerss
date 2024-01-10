@@ -8,15 +8,15 @@ import 'package:flutter_readrss/use_case/impl/feed_use_cases_impl.dart';
 
 final repository = FeedRepositoryImpl();
 
-final mainFeedProvider = FeedConnector();
-final personalFeedProvider = FeedConnector();
-final bookmarksFeedProvider = BookmarkFeedProviderImpl(
-  feedProviders: [mainFeedProvider, personalFeedProvider],
+final mainFeedConnector = FeedConnector();
+final personalFeedConnector = FeedConnector();
+final bookmarksFeedConnector = BookmarkFeedProviderImpl(
+  feedProviders: [mainFeedConnector, personalFeedConnector],
 );
 
 final presenter = FeedPresenterImpl(
-  mainFeedProvider: mainFeedProvider,
-  personalFeedProvider: personalFeedProvider,
+  mainFeedSink: mainFeedConnector,
+  personalFeedSink: personalFeedConnector,
 );
 
 final useCases = FeedUseCasesImpl(
