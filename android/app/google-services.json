@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "233453377047",
-    "project_id": "readrss-88285",
-    "storage_bucket": "readrss-88285.appspot.com"
+    "project_number": "685835080260",
+    "project_id": "flutter-readrss",
+    "storage_bucket": "flutter-readrss.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:233453377047:android:c0d99985e0f341f983ee52",
+        "mobilesdk_app_id": "1:685835080260:android:0744152b731f9bcd8fe211",
         "android_client_info": {
           "package_name": "com.example.flutter_readrss"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBEBM0FYNy0bATs8l-m7BHfpMtoy_zlwfQ"
+          "current_key": "AIzaSyDbWNxklAEtMj7-2avXsx5A94MwOPKlmQw"
         }
       ],
       "services": {

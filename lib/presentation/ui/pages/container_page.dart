@@ -35,16 +35,16 @@ class _ContainerPageState extends State<ContainerPage> {
     super.initState();
     // TODO: finish testing this -> should be 
     // initMainFeedWithMocks();
-    useCases.loadPredefinedFeedsByUrls(mainFeedRssUrls);
+    feedUseCases.loadPredefinedFeedsByUrls(mainFeedRssUrls);
   }
 
-  @override
-  void dispose() {
-    super.dispose();
-    mainFeedConnector.dispose();
-    personalFeedConnector.dispose();
-    bookmarksFeedConnector.dispose();
-  }
+  // @override
+  // void dispose() {
+  //   super.dispose();
+  //   mainFeedConnector.dispose();
+  //   personalFeedConnector.dispose();
+  //   bookmarksFeedConnector.dispose();
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -57,24 +57,24 @@ class _ContainerPageState extends State<ContainerPage> {
             FeedPage(
               title: ScreenPage.mainFeed.title,
               feedItemsStream: mainFeedConnector.getFeedItemsStream(),
-              toggleBookmark: useCases.bookmarkToggleFeedItem,
+              toggleBookmark: feedUseCases.bookmarkToggleFeedItem,
             ),
             FeedPage(
               title: ScreenPage.personalFeed.title,
               feedItemsStream: personalFeedConnector.getFeedItemsStream(),
-              toggleBookmark: useCases.bookmarkToggleFeedItem,
+              toggleBookmark: feedUseCases.bookmarkToggleFeedItem,
             ),
             FeedPage(
               title: ScreenPage.bookmarks.title,
               feedItemsStream: bookmarksFeedConnector.getFeedItemsStream(),
-              toggleBookmark: useCases.bookmarkToggleFeedItem,
+              toggleBookmark: feedUseCases.bookmarkToggleFeedItem,
               noItemsText: "Your bookmarked feed items will appear here.",
             ),
             SettingsPage(
               feedSourcesStream: personalFeedConnector.getFeedSourcesStream(),
-              loadFeedByUrl: useCases.loadPersonalFeedSourceByUrl,
-              deleteFeedSource: useCases.deleteFeedSource,
-              toggleFeedSource: useCases.toggleFeedSource,
+              loadFeedByUrl: feedUseCases.loadPersonalFeedSourceByUrl,
+              deleteFeedSource: feedUseCases.deleteFeedSource,
+              toggleFeedSource: feedUseCases.toggleFeedSource,
             ),
           ],
         ),

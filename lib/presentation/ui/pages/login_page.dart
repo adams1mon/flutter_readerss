@@ -1,32 +1,55 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_readrss/presentation/ui/styles/styles.dart';
+import 'package:flutter_readrss/use_case/exceptions/use_case_exceptions.dart';
 
 import '../const/screen_route.dart';
 
 class LoginPage extends StatelessWidget {
-  const LoginPage({Key? key}) : super(key: key);
+  const LoginPage({
+    Key? key,
+    required this.register,
+    required this.login,
+  }) : super(key: key);
+
+  final Future<UserCredential?> Function(String email, String password)
+      register;
+  final Future<UserCredential?> Function(String email, String password) login;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: colors(context).background,
-      body: const MainContainer(),
+      body: MainContainer(
+        register: register,
+        login: login,
+      ),
     );
   }
 }
 
 class MainContainer extends StatelessWidget {
-  const MainContainer({Key? key}) : super(key: key);
+  const MainContainer({
+    Key? key,
+    required this.register,
+    required this.login,
+  }) : super(key: key);
+
+  final Future<UserCredential?> Function(String email, String password)
+      register;
+  final Future<UserCredential?> Function(String email, String password) login;
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    return Center(
       child: Row(
         children: [
           Expanded(
             child: SingleChildScrollView(
-              child: MainContent(),
+              child: MainContent(
+                register: register,
+                login: login,
+              ),
             ),
           ),
         ],
@@ -36,15 +59,26 @@ class MainContainer extends StatelessWidget {
 }
 
 class MainContent extends StatelessWidget {
-  const MainContent({Key? key}) : super(key: key);
+  const MainContent({
+    Key? key,
+    required this.register,
+    required this.login,
+  }) : super(key: key);
+
+  final Future<UserCredential?> Function(String email, String password)
+      register;
+  final Future<UserCredential?> Function(String email, String password) login;
 
   @override
   Widget build(BuildContext context) {
-    return const Column(
+    return Column(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        TitleText(),
-        AuthForm(),
+        const TitleText(),
+        AuthForm(
+          register: register,
+          login: login,
+        ),
       ],
     );
   }
@@ -71,7 +105,15 @@ class TitleText extends StatelessWidget {
 }
 
 class AuthForm extends StatefulWidget {
-  const AuthForm({Key? key}) : super(key: key);
+  const AuthForm({
+    Key? key,
+    required this.register,
+    required this.login,
+  }) : super(key: key);
+
+  final Future<UserCredential?> Function(String email, String password)
+      register;
+  final Future<UserCredential?> Function(String email, String password) login;
 
   @override
   AuthFormState createState() => AuthFormState();
@@ -92,18 +134,11 @@ class AuthFormState extends State<AuthForm> {
   Future<void> onLoginPressed() async {
     if (_formKey.currentState!.validate()) {
       try {
-        await FirebaseAuth.instance.signInWithEmailAndPassword(
-          email: emailController.text,
-          password: passwordController.text,
-        );
-        // TODO: fix async gap
-        Navigator.pushReplacementNamed(context, ScreenRoute.main.route);
+        await widget.login(emailController.text, passwordController.text);
+      } on UseCaseException catch (e) {
+        _snackbarMessage(e.message ?? "Login failed. Check your credentials");
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Login failed. Check your credentials.'),
-          ),
-        );
+        _snackbarMessage('Login failed. Check your credentials');
       }
     }
   }
@@ -111,25 +146,27 @@ class AuthFormState extends State<AuthForm> {
   Future<void> onRegisterPressed() async {
     if (_formKey.currentState!.validate()) {
       try {
-        await FirebaseAuth.instance.createUserWithEmailAndPassword(
-          email: emailController.text,
-          password: passwordController.text,
-        );
-        // TODO: fix async gap
-        Navigator.pushReplacementNamed(context, ScreenRoute.main.route);
+        await widget.register(emailController.text, passwordController.text);
+      } on UseCaseException catch (e) {
+        _snackbarMessage(e.message ??
+            "Registration failed. Try a different email or password.");
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content:
-                Text('Registration failed. Try a different email or password.'),
-          ),
-        );
+        _snackbarMessage(
+            'Registration failed. Try a different email or password.');
       }
     }
   }
 
   void onGuestLoginPressed() {
     Navigator.pushReplacementNamed(context, ScreenRoute.main.route);
+  }
+
+  void _snackbarMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+      ),
+    );
   }
 
   @override
@@ -167,24 +204,21 @@ class AuthFormState extends State<AuthForm> {
 class AuthButtonContainer extends StatelessWidget {
   const AuthButtonContainer({
     Key? key,
-    required void Function()? onLoginPressed,
-    required void Function()? onRegisterPressed,
-    required void Function()? onGuestLoginPressed,
-  })  : _onLoginPressed = onLoginPressed,
-        _onRegisterPressed = onRegisterPressed,
-        _onGuestLoginPressed = onGuestLoginPressed,
-        super(key: key);
+    required this.onLoginPressed,
+    required this.onRegisterPressed,
+    required this.onGuestLoginPressed,
+  }) : super(key: key);
 
-  final void Function()? _onLoginPressed;
-  final void Function()? _onRegisterPressed;
-  final void Function()? _onGuestLoginPressed;
+  final void Function() onLoginPressed;
+  final void Function() onRegisterPressed;
+  final void Function() onGuestLoginPressed;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
         ElevatedButton(
-          onPressed: _onLoginPressed,
+          onPressed: onLoginPressed,
           style: ElevatedButton.styleFrom(
             shape: roundedBorders(),
             backgroundColor: colors(context).primary,
@@ -194,7 +228,7 @@ class AuthButtonContainer extends StatelessWidget {
           child: const Text('Login'),
         ),
         ElevatedButton(
-          onPressed: _onRegisterPressed,
+          onPressed: onRegisterPressed,
           style: ElevatedButton.styleFrom(
             shape: roundedBorders(),
             backgroundColor: colors(context).primary,
@@ -204,7 +238,7 @@ class AuthButtonContainer extends StatelessWidget {
           child: const Text('Register'),
         ),
         OutlinedButton(
-          onPressed: _onGuestLoginPressed,
+          onPressed: onGuestLoginPressed,
           style: OutlinedButton.styleFrom(
             shape: roundedBorders(),
             backgroundColor: colors(context).surface,

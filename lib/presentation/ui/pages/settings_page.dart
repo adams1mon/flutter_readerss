@@ -17,25 +17,18 @@ import 'container_page.dart';
 class SettingsPage extends StatelessWidget {
   const SettingsPage({
     super.key,
-    // required this.mainFeedBloc,
-    // required this.personalFeedBloc,
     required this.feedSourcesStream,
     required this.loadFeedByUrl,
     required this.deleteFeedSource,
     required this.toggleFeedSource,
   });
 
-  // final FeedSourcesBloc mainFeedBloc;
-  // final FeedSourcesBloc personalFeedBloc;
-
   final Stream<FeedSourcesEvent> feedSourcesStream;
-  // final PersonalFeedUseCases personalFeedUseCases;
 
   final Future<void> Function(String) loadFeedByUrl;
   final Future<void> Function(FeedSource) deleteFeedSource;
   final Future<void> Function(FeedSource) toggleFeedSource;
 
-  // void launchAddFeedDialog(BuildContext context, FeedSourcesBloc feedBloc) {
   void launchAddFeedDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -43,7 +36,6 @@ class SettingsPage extends StatelessWidget {
         return Center(
           child: SingleChildScrollView(
             child: AddFeedSourceDialog(
-              // feedBloc: feedBloc,
               loadFeedByUrl: loadFeedByUrl,
             ),
           ),
@@ -73,7 +65,6 @@ class SettingsPage extends StatelessWidget {
               flex: 1,
               child: FeedSourcesContainer(
                 listTitle: "Personal Feed List",
-                // feedBloc: personalFeedBloc,
                 feedSourcesStream: feedSourcesStream,
                 deleteFeedSource: deleteFeedSource,
                 toggleFeedSource: toggleFeedSource,
@@ -83,12 +74,6 @@ class SettingsPage extends StatelessWidget {
           ],
         ),
       ),
-      // TODO: decide if floatingActionButton stays or we also want to manage the main feed
-      // floatingActionButton: FloatingActionButton(
-      //   onPressed: () {
-      //   },
-      //   child: const Icon(Icons.add),
-      // ),
     );
   }
 }
@@ -97,7 +82,6 @@ class FeedSourcesContainer extends StatelessWidget {
   const FeedSourcesContainer({
     super.key,
     required this.listTitle,
-    // required this.feedBloc,
 
     required this.feedSourcesStream,
     required this.deleteFeedSource,
@@ -111,7 +95,6 @@ class FeedSourcesContainer extends StatelessWidget {
   final Future<void> Function(FeedSource) toggleFeedSource;
 
   final String listTitle;
-  // final FeedSourcesBloc feedBloc;
   final void Function() launchAddFeedDialog;
 
   @override
@@ -127,7 +110,6 @@ class FeedSourcesContainer extends StatelessWidget {
           Expanded(
             flex: 1,
             child: FeedSourceList(
-              // feedBloc: feedBloc,
               feedSourcesStream: feedSourcesStream,
               removeFeedSource: deleteFeedSource,
               toggleFeedSource: toggleFeedSource,
@@ -156,11 +138,9 @@ class FeedSourcesContainer extends StatelessWidget {
 class AddFeedSourceDialog extends StatefulWidget {
   const AddFeedSourceDialog({
     super.key,
-    // required this.feedBloc,
     required this.loadFeedByUrl,
   });
 
-  // final FeedSourcesBloc feedBloc;
   final Future<void> Function(String) loadFeedByUrl;
 
   @override
@@ -274,7 +254,6 @@ class FeedSourceListTitle extends StatelessWidget {
 class FeedSourceList extends StatelessWidget {
   const FeedSourceList({
     super.key,
-    // required this.feedBloc,
     required this.feedSourcesStream,
     required this.removeFeedSource,
     required this.toggleFeedSource,
@@ -293,7 +272,6 @@ class FeedSourceList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<FeedSourcesEvent>(
-      // stream: feedBloc.sourcesStream,
       stream: feedSourcesStream,
       builder: (context, snapshot) {
         if (snapshot.hasError) {

@@ -2,7 +2,6 @@
 
 enum ScreenRoute{
 
-  login(route: "/login"),
   main(route: "/main"),
   user(route: "/user"),
   webview(route: "/webview");
