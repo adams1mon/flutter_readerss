@@ -1,6 +1,7 @@
 
 import 'dart:developer';
 
+import 'package:flutter_readrss/use_case/auth_use_cases.dart';
 import 'package:flutter_readrss/use_case/exceptions/use_case_exceptions.dart';
 import 'package:flutter_readrss/use_case/feed_presenter.dart';
 import 'package:flutter_readrss/use_case/feed_repository.dart';
@@ -12,14 +13,19 @@ class FeedUseCasesImpl implements FeedUseCases {
   FeedUseCasesImpl({
     required FeedPresenter feedPresenter,
     required FeedRepository feedRepository,
+    required AuthUseCases authUseCases,
   })  : _feedPresenter = feedPresenter,
-        _feedRepository = feedRepository;
+        _feedRepository = feedRepository,
+        _authUseCases = authUseCases;
 
   final FeedPresenter _feedPresenter;
   final FeedRepository _feedRepository;
+  final AuthUseCases _authUseCases;
 
   @override
   Future<void> loadPredefinedFeedsByUrls(List<String> feedUrls) async {
+    log("loading predefined feeds");
+    
     for (final url in feedUrls) {
       try {
         final (feedSource, feedItems) = await _feedRepository.getFeedByUrl(
@@ -54,6 +60,11 @@ class FeedUseCasesImpl implements FeedUseCases {
 
   @override
   Future<void> loadPersonalFeedSourceByUrl(String feedUrl) async {
+    if (_authUseCases.getUser() == null) {
+      log("User must be logged in to add personal feeds");
+      return;
+    }
+
     try {
       final (feedSource, feedItems) = await _feedRepository.getFeedByUrl(
         feedUrl,
@@ -69,6 +80,11 @@ class FeedUseCasesImpl implements FeedUseCases {
 
   @override
   Future<void> toggleFeedSource(FeedSource source) async {
+    if (_authUseCases.getUser() == null) {
+      log("User must be logged in to toggle feed sources");
+      return;
+    }
+
     try {
       source.enabled = !source.enabled;
       await _feedRepository.saveFeedSource(source);
@@ -90,6 +106,11 @@ class FeedUseCasesImpl implements FeedUseCases {
 
   @override
   Future<void> deleteFeedSource(FeedSource source) async {
+    if (_authUseCases.getUser() == null) {
+      log("User must be logged in to delete feed sources");
+      return;
+    }
+
     try {
       await _feedRepository.deleteFeedSource(source);
       _feedPresenter.setFeed(source, []);
@@ -102,6 +123,11 @@ class FeedUseCasesImpl implements FeedUseCases {
 
   @override
   Future<void> bookmarkToggleFeedItem(FeedItem item) async {
+    if (_authUseCases.getUser() == null) {
+      log("User must be logged in to bookmark items");
+      return;
+    }
+
     try {
       item.bookmarked = !item.bookmarked;
       await _feedRepository.saveFeedItem(item);
@@ -114,11 +140,18 @@ class FeedUseCasesImpl implements FeedUseCases {
 
   @override
   Future<void> likeFeedItem(FeedItem item) async {
+    if (_authUseCases.getUser() == null) {
+      log("User must be logged in to like items");
+      return;
+    }
+
     log("likeFeedItem stub !");
   }
 
   @override
   Future<void> viewFeedItem(FeedItem item) async {
+    if (_authUseCases.getUser() == null) return;
+
     log("viewFeedItem stub !");
   }
 }

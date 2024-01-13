@@ -1,4 +1,4 @@
-
+import 'dart:async';
 import 'dart:developer';
 
 import 'package:firebase_auth/firebase_auth.dart';
@@ -6,100 +6,127 @@ import 'package:flutter_readrss/use_case/exceptions/use_case_exceptions.dart';
 
 // TODO: ideally we would wrap UserCredential and User in custom business objects to abstract away Firebase completely
 abstract class AuthUseCases {
-  Future<UserCredential?> registerWithEmailAndPassword(String email, String password);
-  Future<UserCredential?> loginWithEmailAndPassword(String email, String password);
+  Future<void> registerWithEmailAndPassword(String email, String password);
+  Future<void> loginWithEmailAndPassword(String email, String password);
+  void loginAsGuest();
   Future<void> signOut();
   Future<void> deleteUser();
 
+  // returns null if the user is not logged in, or if a guest user is used
   User? getUser();
-  Stream<User?> getUserChanges();
+  Stream<AuthEvent> getAuthEventStream();
 }
 
+enum AuthEventType {
+  init, // used to allow stream initialization
+  register,
+  login,
+  guestLogin,
+  signOut,
+  delete,
+}
 
-// TODO: wrap events correctly: register, login, signout, delete; propagate these instead of Firebase events
+class AuthEvent {
+  AuthEvent({required this.type, required this.user});
+  AuthEventType type;
+  // TODO: this should be wrapped ideally
+  User? user;
+}
 
 class AuthUseCasesImpl implements AuthUseCases {
 
+  User? _user;
+  final _authEvents = StreamController<AuthEvent>.broadcast();
+
   AuthUseCasesImpl() {
-    _userChanges
-      .listen((User? user) {
-        log('user event: $user');
-        _user = user;
-      });
+    FirebaseAuth.instance.authStateChanges()
+    .listen((User? user) {
+      _user = user;
+    });
   }
 
-  final Stream<User?> _userChanges = FirebaseAuth.instance.authStateChanges();
-  User? _user;
-
-  @override 
+  @override
   User? getUser() => _user;
 
   @override
-  Stream<User?> getUserChanges() => _userChanges;
+  Stream<AuthEvent> getAuthEventStream() => _authEvents.stream;
 
   @override
-  Future<UserCredential?> loginWithEmailAndPassword(String email, String password) async {
-   try {
-      final userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+  void loginAsGuest() {
+    _user = null;
+    _authEvents.add(AuthEvent(type: AuthEventType.guestLogin, user: null));
+  }
+
+  @override
+  Future<void> loginWithEmailAndPassword(String email, String password) async {
+    try {
+      final userCredential =
+          await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
 
       log('sign in: $userCredential');
-
-      return userCredential;
-
+      _user = userCredential.user;
+      _authEvents.add(AuthEvent(type: AuthEventType.login,user: _user));
     } on FirebaseAuthException catch (e) {
       // TODO: do these when validating things locally, not by Firebase
       switch (e.code) {
         case 'weak-password':
-          throw UseCaseException('The password provided is too weak.'); 
+          throw UseCaseException('The password provided is too weak.');
         case 'invalid-email':
           throw UseCaseException('Invalid email address');
         case 'email-already-in-use':
-          throw UseCaseException('An account already exists for this email address.');
+          throw UseCaseException(
+              'An account already exists for this email address.');
       }
     } catch (e) {
-      throw UseCaseException('Registration failed. Try a different email or password.');
-    } 
-    return null;
+      throw UseCaseException(
+          'Registration failed. Try a different email or password.');
+    }
   }
 
   @override
-  Future<UserCredential?> registerWithEmailAndPassword(String email, String password) async {
+  Future<void> registerWithEmailAndPassword(String email, String password) async {
     try {
       final userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
 
-      log('sign in: $userCredential');
-
-      return userCredential;
-
+      log('register: $userCredential');
+      _user = userCredential.user;
+      _authEvents.add(AuthEvent(type: AuthEventType.login, user: _user));
     } on FirebaseAuthException catch (e) {
       // TODO: do these when validating things locally, not by Firebase
       switch (e.code) {
         case 'weak-password':
-          throw UseCaseException('The password provided is too weak.'); 
+          throw UseCaseException('The password provided is too weak.');
         case 'invalid-email':
           throw UseCaseException('Invalid email address');
         case 'email-already-in-use':
-          throw UseCaseException('An account already exists for this email address.');
+          throw UseCaseException(
+              'An account already exists for this email address.');
       }
     } catch (e) {
-      throw UseCaseException('Registration failed. Try a different email or password.');
+      throw UseCaseException(
+          'Registration failed. Try a different email or password.');
     }
-    return null;
   }
 
   @override
-  Future<void> signOut() {
-    return FirebaseAuth.instance.signOut();
+  Future<void> signOut() async {
+    if (_user == null) return;
+    await FirebaseAuth.instance.signOut();
+    _user = null;
+    _authEvents.add(AuthEvent(type: AuthEventType.signOut, user: null));
   }
 
   @override
-  Future<void> deleteUser() {
-    return FirebaseAuth.instance.currentUser?.delete() ?? Future.value();
+  Future<void> deleteUser() async {
+    if (_user == null) return;
+    await _user?.delete();
+    _user = null;
+    _authEvents.add(AuthEvent(type: AuthEventType.delete, user: _user));
   }
 }

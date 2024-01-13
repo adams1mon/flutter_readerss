@@ -20,12 +20,14 @@ final presenter = FeedPresenterImpl(
   personalFeedSink: personalFeedConnector,
 );
 
+final authUseCases = AuthUseCasesImpl();
+
 final feedUseCases = FeedUseCasesImpl(
   feedPresenter: presenter,
   feedRepository: repository,
+  authUseCases: authUseCases,
 );
 
-final authUseCases = AuthUseCasesImpl();
 
 void globalCleanup() {
   mainFeedConnector.dispose();

@@ -8,6 +8,7 @@ import 'package:flutter_readrss/presentation/ui/pages/user_page.dart';
 import 'package:flutter_readrss/presentation/ui/pages/webview_page.dart';
 import 'package:flutter_readrss/presentation/ui/styles/styles.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_readrss/use_case/auth_use_cases.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -40,6 +41,7 @@ class _MyAppState extends State<MyApp> {
         theme: globalTheme,
         initialRoute: ScreenRoute.main.route,
         routes: {
+          // TODO: based on auth events, decide what route to show
           ScreenRoute.main.route: (context) => const LoginDecider(),
           ScreenRoute.user.route: (context) => UserPage(
                 title: "Account",
@@ -56,28 +58,38 @@ class LoginDecider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<User?>(
-      stream: authUseCases.getUserChanges(),
+    return StreamBuilder<AuthEvent>(
+      stream: authUseCases.getAuthEventStream(),
+      initialData: AuthEvent(type: AuthEventType.init, user: null),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return const Text("An unknown error occurred.");
         }
 
-        if (snapshot.connectionState == ConnectionState.none ||
+        if (snapshot.connectionState == ConnectionState.none || 
             snapshot.connectionState == ConnectionState.waiting) {
-          return const CircularProgressIndicator();
-        }
-
+          return LoginPage(
+            register: authUseCases.registerWithEmailAndPassword,
+            login: authUseCases.loginWithEmailAndPassword,
+            guestLogin: authUseCases.loginAsGuest,
+          );
+        } 
+        
         if (snapshot.connectionState == ConnectionState.active) {
-          if (snapshot.data == null) {
-            // login needed
-            return LoginPage(
-              register: authUseCases.registerWithEmailAndPassword,
-              login: authUseCases.loginWithEmailAndPassword,
-            );
-          } else {
-            // user loaded from disk
-            return const ContainerPage();
+          switch (snapshot.data?.type) {
+            case AuthEventType.register ||
+                  AuthEventType.signOut ||
+                  AuthEventType.delete ||
+                  AuthEventType.init ||
+                  null:
+              // login or register
+              return LoginPage(
+                register: authUseCases.registerWithEmailAndPassword,
+                login: authUseCases.loginWithEmailAndPassword,
+                guestLogin: authUseCases.loginAsGuest,
+              );
+            case AuthEventType.login || AuthEventType.guestLogin:
+              return const ContainerPage();
           }
         }
 

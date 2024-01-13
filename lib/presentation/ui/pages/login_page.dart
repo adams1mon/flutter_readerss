@@ -1,20 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_readrss/presentation/ui/styles/styles.dart';
 import 'package:flutter_readrss/use_case/exceptions/use_case_exceptions.dart';
-
-import '../const/screen_route.dart';
 
 class LoginPage extends StatelessWidget {
   const LoginPage({
     Key? key,
     required this.register,
     required this.login,
+    required this.guestLogin,
   }) : super(key: key);
 
-  final Future<UserCredential?> Function(String email, String password)
+  final Future<void> Function(String email, String password)
       register;
-  final Future<UserCredential?> Function(String email, String password) login;
+  final Future<void> Function(String email, String password) login;
+  final void Function() guestLogin;
 
   @override
   Widget build(BuildContext context) {
@@ -23,6 +22,7 @@ class LoginPage extends StatelessWidget {
       body: MainContainer(
         register: register,
         login: login,
+        guestLogin: guestLogin,
       ),
     );
   }
@@ -33,11 +33,13 @@ class MainContainer extends StatelessWidget {
     Key? key,
     required this.register,
     required this.login,
+    required this.guestLogin,
   }) : super(key: key);
 
-  final Future<UserCredential?> Function(String email, String password)
+  final Future<void> Function(String email, String password)
       register;
-  final Future<UserCredential?> Function(String email, String password) login;
+  final Future<void> Function(String email, String password) login;
+  final void Function() guestLogin;
 
   @override
   Widget build(BuildContext context) {
@@ -49,6 +51,7 @@ class MainContainer extends StatelessWidget {
               child: MainContent(
                 register: register,
                 login: login,
+                guestLogin: guestLogin,
               ),
             ),
           ),
@@ -63,11 +66,13 @@ class MainContent extends StatelessWidget {
     Key? key,
     required this.register,
     required this.login,
+    required this.guestLogin,
   }) : super(key: key);
 
-  final Future<UserCredential?> Function(String email, String password)
+  final Future<void> Function(String email, String password)
       register;
-  final Future<UserCredential?> Function(String email, String password) login;
+  final Future<void> Function(String email, String password) login;
+  final void Function() guestLogin;
 
   @override
   Widget build(BuildContext context) {
@@ -78,6 +83,7 @@ class MainContent extends StatelessWidget {
         AuthForm(
           register: register,
           login: login,
+          guestLogin: guestLogin,
         ),
       ],
     );
@@ -109,11 +115,13 @@ class AuthForm extends StatefulWidget {
     Key? key,
     required this.register,
     required this.login,
+    required this.guestLogin,
   }) : super(key: key);
 
-  final Future<UserCredential?> Function(String email, String password)
+  final Future<void> Function(String email, String password)
       register;
-  final Future<UserCredential?> Function(String email, String password) login;
+  final Future<void> Function(String email, String password) login;
+  final void Function() guestLogin;
 
   @override
   AuthFormState createState() => AuthFormState();
@@ -157,10 +165,6 @@ class AuthFormState extends State<AuthForm> {
     }
   }
 
-  void onGuestLoginPressed() {
-    Navigator.pushReplacementNamed(context, ScreenRoute.main.route);
-  }
-
   void _snackbarMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -191,7 +195,7 @@ class AuthFormState extends State<AuthForm> {
               child: AuthButtonContainer(
                 onLoginPressed: onLoginPressed,
                 onRegisterPressed: onRegisterPressed,
-                onGuestLoginPressed: onGuestLoginPressed,
+                onGuestLoginPressed: widget.guestLogin,
               ),
             ),
           ],

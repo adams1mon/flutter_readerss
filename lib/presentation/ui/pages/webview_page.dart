@@ -65,7 +65,6 @@ class _ArticleWebViewPageState extends State<ArticleWebViewPage> {
 
     return SafeArea(
       child: Scaffold(
-        appBar: ReadrssAppBar(title: "", context: context),
         backgroundColor: colors(context).background,
         body: FutureBuilder(
           future: _openUriInWebView(uri),

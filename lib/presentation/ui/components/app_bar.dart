@@ -1,4 +1,3 @@
-import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_readrss/di.dart';
@@ -23,10 +22,13 @@ class ReadrssAppBar extends AppBar {
                             ScreenRoute.user.route,
                           ),
                       child:
-                          UserAvatar(image: Image.asset("assets/avatar.jpg")))
+                          // UserAvatar(image: Image.asset("assets/avatar.jpg")))
+                          UserAvatar(image: authUseCases.getUser()?.photoURL != null ? Image.network(authUseCases.getUser()!.photoURL!) : Image.asset("assets/avatar.jpg")))
                   : TextButton(
-                      // TODO: take me to the login page ?
-                      onPressed: () => log('register user stub'),
+                      onPressed: () {
+                        // go to the initial page
+                        Navigator.of(context).pushNamedAndRemoveUntil(ScreenRoute.main.route, (route) => false);
+                      },
                       child: const Text("Register"),
                     ),
             ),
