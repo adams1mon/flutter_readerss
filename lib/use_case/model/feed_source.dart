@@ -4,6 +4,7 @@ import 'package:flutter_readrss/presentation/ui/styles/styles.dart';
 
 // for the settings page
 class FeedSource {
+  final String id;
   final String title;
   final String rssUrl;
   final String siteUrl;
@@ -14,17 +15,16 @@ class FeedSource {
   final int ttl;
 
   FeedSource({
+    required this.id,
     required this.title,
     required this.rssUrl,
     required this.type,
-    String? siteUrl,
+    required this.siteUrl,
     this.enabled = true,
     Image? image,
-    int? ttl,
+    required this.ttl,
     Set<FeedItem>? feedItems,
-  })  : siteUrl = siteUrl ?? "",
-        image = image ?? defaultFeedImage,
-        ttl = ttl ?? 10;
+  }) : image = image ?? defaultFeedImage;
 
   void toggleEnabled() {
     enabled = !enabled;

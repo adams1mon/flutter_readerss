@@ -1,4 +1,4 @@
-import 'package:flutter_readrss/data/feed_repository.dart';
+import 'package:flutter_readrss/data/feed_repository_impl.dart';
 import 'package:flutter_readrss/presentation/presenter/impl/bookmark_feed_provider.dart';
 import 'package:flutter_readrss/presentation/presenter/impl/feed_connector.dart';
 import 'package:flutter_readrss/presentation/presenter/impl/feed_presenter_impl.dart';

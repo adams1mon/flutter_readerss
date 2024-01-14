@@ -1,6 +1,5 @@
 import 'dart:developer';
-import 'package:flutter/material.dart';
-import 'package:flutter_readrss/use_case/model/feed_item.dart';
+import 'package:flutter_readrss/data/feed_repository_impl.dart';
 import 'package:flutter_readrss/use_case/model/feed_source.dart';
 import "package:http/http.dart" as http;
 import 'package:webfeed/domain/rss_feed.dart';
@@ -32,9 +31,8 @@ class _RssParseException extends BaseException {
 }
 
 class RssFetcher {
-  static Future<(FeedSource, List<FeedItem>)> fetch(
+  static Future<(FeedSourceModel, List<FeedItemModel>)> fetch(
     String url,
-    FeedType feedSourceType,
   ) async {
     log('trying to parse $url');
     var uri = Uri.tryParse(url);
@@ -48,7 +46,6 @@ class RssFetcher {
       return _parseRssText(
         url: url,
         rssText: response.body,
-        feedSourceType: feedSourceType,
       );
     } on _RssParseException catch (e) {
       log("failed to parse rss text", error: e);
@@ -59,10 +56,9 @@ class RssFetcher {
     }
   }
 
-  static (FeedSource, List<FeedItem>) _parseRssText({
+  static (FeedSourceModel, List<FeedItemModel>) _parseRssText({
     required String url,
     required String rssText,
-    required FeedType feedSourceType,
   }) {
     log('trying to parse rss feed');
 
@@ -79,32 +75,32 @@ class RssFetcher {
 
     // TODO: maybe check the image url so unexpected errors are caught here
     // not on upper layers when trying to display the image
-    final feedImage = feed.image?.url?.isNotEmpty == true
-        ? Image.network(feed.image!.url!)
-        : null;
+    // final feedImage = feed.image?.url?.isNotEmpty == true
+    //     ? Image.network(feed.image!.url!)
+    //     : null;
 
-    final feedItems = _createFeedItems(feed, url, feedImage);
+    // final feedItems = _createFeedItems(feed, url, feedImage);
+    final feedItems = _createFeedItems(feed, url, feed.image?.url);
 
     return (
-      FeedSource(
+      FeedSourceModel(
         title: feed.title!,
-        siteUrl: feed.link,
+        siteUrl: feed.link ?? "",
         rssUrl: url,
-        type: feedSourceType,
-        image: feedImage,
-        enabled: true,
-        ttl: feed.ttl,
+        iconUrl: feed.image?.url,
+        ttl: feed.ttl ?? 10,
       ),
       feedItems
     );
   }
 
-  static List<FeedItem> _createFeedItems(
+  static List<FeedItemModel> _createFeedItems(
     RssFeed feed,
     String rssUrl,
-    Image? feedSourceImage,
+    // Image? feedSourceImage,
+    String? feedSourceImageUrl,
   ) {
-    final feedItems = <FeedItem>[];
+    final feedItems = <FeedItemModel>[];
 
     if (feed.items == null) {
       return feedItems;
@@ -116,16 +112,15 @@ class RssFetcher {
       (rssItem) {
         // TODO: fetch views, likes and if the user liked the feed item from the backend
 
-        return FeedItem(
+        return FeedItemModel(
           feedSourceTitle: feed.title!,
           feedSourceRssUrl: rssUrl,
           title: rssItem.title!,
-          views: 42, // TODO: fetch this
-          likes: 42, // TODO: fetch this
-          liked: false, // TODO: fetch this
+          views: 0, // TODO: fetch this
+          likes: 0, // TODO: fetch this
           description: rssItem.description,
           articleUrl: rssItem.link!,
-          sourceIcon: feedSourceImage,
+          sourceIconUrl: feedSourceImageUrl,
           pubDate: rssItem.pubDate,
         );
       },

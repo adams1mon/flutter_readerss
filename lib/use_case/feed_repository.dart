@@ -7,8 +7,8 @@ abstract class FeedRepository {
       String url, 
       FeedType feedType
   );
-  Future saveFeedSource(FeedSource source);
-  Future deleteFeedSource(FeedSource source);
-  Future saveFeedItem(FeedItem item);
-  Future deleteFeedItem(FeedItem item);
+  Future saveFeedSource(FeedSource source, String userId);
+  Future deleteFeedSource(FeedSource source, String userId);
+  Future saveFeedItem(FeedItem item, String userId);
+  Future deleteFeedItem(FeedItem item, String userId);
 }

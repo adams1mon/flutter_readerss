@@ -59,7 +59,8 @@ class FeedUseCasesImpl implements FeedUseCases {
 
   @override
   Future<void> loadPersonalFeedSourceByUrl(String feedUrl) async {
-    if (_authUseCases.getUser() == null) {
+    final user = _authUseCases.getUser();
+    if (user == null) {
       log("User must be logged in to add personal feeds");
       return;
     }
@@ -79,14 +80,15 @@ class FeedUseCasesImpl implements FeedUseCases {
 
   @override
   Future<void> toggleFeedSource(FeedSource source) async {
-    if (_authUseCases.getUser() == null) {
+    final user = _authUseCases.getUser();
+    if (user == null) {
       log("User must be logged in to toggle feed sources");
       return;
     }
 
     try {
       source.enabled = !source.enabled;
-      await _feedRepository.saveFeedSource(source);
+      await _feedRepository.saveFeedSource(source, user.uid);
 
       if (!source.enabled) {
         _feedPresenter.setFeed(source, []);
@@ -105,13 +107,14 @@ class FeedUseCasesImpl implements FeedUseCases {
 
   @override
   Future<void> deleteFeedSource(FeedSource source) async {
-    if (_authUseCases.getUser() == null) {
+    final user = _authUseCases.getUser();
+    if (user == null) {
       log("User must be logged in to delete feed sources");
       return;
     }
 
     try {
-      await _feedRepository.deleteFeedSource(source);
+      await _feedRepository.deleteFeedSource(source, user.uid);
       _feedPresenter.setFeed(source, []);
       _feedPresenter.removeFeedSource(source);
     } catch (e) {
@@ -122,14 +125,19 @@ class FeedUseCasesImpl implements FeedUseCases {
 
   @override
   Future<void> bookmarkToggleFeedItem(FeedItem item) async {
-    if (_authUseCases.getUser() == null) {
+    final user = _authUseCases.getUser();
+    if (user == null) {
       log("User must be logged in to bookmark items");
       return;
     }
 
     try {
       item.bookmarked = !item.bookmarked;
-      await _feedRepository.saveFeedItem(item);
+      if (item.bookmarked) {
+        await _feedRepository.saveFeedItem(item, user.uid);
+      } else {
+        await _feedRepository.deleteFeedItem(item, user.uid);
+      }
       _feedPresenter.updateFeedItem(item);
     } catch (e) {
       log("error while bookmarking feed item $item", error: e);
@@ -139,7 +147,8 @@ class FeedUseCasesImpl implements FeedUseCases {
 
   @override
   Future<void> likeFeedItem(FeedItem item) async {
-    if (_authUseCases.getUser() == null) {
+    final user = _authUseCases.getUser();
+    if (user == null) {
       log("User must be logged in to like items");
       return;
     }
