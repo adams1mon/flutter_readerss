@@ -2,7 +2,10 @@
 
 enum ScreenRoute{
 
+  authHandler(route: "/auth-handler"),
+
   main(route: "/main"),
+  login(route: "/login"),
   user(route: "/user"),
   webview(route: "/webview");
 

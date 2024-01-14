@@ -1,7 +1,6 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_readrss/presentation/ui/components/app_bar.dart';
 import 'package:flutter_readrss/presentation/ui/styles/styles.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 

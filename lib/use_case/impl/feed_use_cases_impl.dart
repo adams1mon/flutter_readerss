@@ -25,7 +25,6 @@ class FeedUseCasesImpl implements FeedUseCases {
   @override
   Future<void> loadPredefinedFeedsByUrls(List<String> feedUrls) async {
     log("loading predefined feeds");
-    
     for (final url in feedUrls) {
       try {
         final (feedSource, feedItems) = await _feedRepository.getFeedByUrl(

@@ -302,8 +302,9 @@ class FormInputContainer extends StatelessWidget {
             }
             return null;
           },
+          obscureText: true,
           decoration: const InputDecoration(
-            hintText: "Your password",
+            hintText: "Enter your password",
             constraints: BoxConstraints(maxWidth: 340),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.all(

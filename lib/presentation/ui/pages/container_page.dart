@@ -11,7 +11,6 @@ class ReadrssBottomNavbarNotifier extends ChangeNotifier {
   // private state
   var _pageIndex = 0;
 
-  // callback which notifies consumers about changing the page
   void changePage(index) {
     _pageIndex = index;
     notifyListeners();
@@ -37,14 +36,6 @@ class _ContainerPageState extends State<ContainerPage> {
     // initMainFeedWithMocks();
     feedUseCases.loadPredefinedFeedsByUrls(mainFeedRssUrls);
   }
-
-  // @override
-  // void dispose() {
-  //   super.dispose();
-  //   mainFeedConnector.dispose();
-  //   personalFeedConnector.dispose();
-  //   bookmarksFeedConnector.dispose();
-  // }
 
   @override
   Widget build(BuildContext context) {
