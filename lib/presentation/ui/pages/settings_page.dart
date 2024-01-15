@@ -320,7 +320,7 @@ class FeedSourceListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      leading: FeedAvatar(image: feedSource.image),
+      leading: FeedAvatar(imageUrl: feedSource.iconUrl),
       title: Text(
         feedSource.title,
         overflow: TextOverflow.ellipsis,

@@ -9,6 +9,8 @@ import 'package:flutter_readrss/use_case/feed_use_cases.dart';
 import 'package:flutter_readrss/use_case/model/feed_item.dart';
 import 'package:flutter_readrss/use_case/model/feed_source.dart';
 
+// TODO: resolve 'scope leakage' between use case and repository layers (proper separation would help lol)
+
 class FeedUseCasesImpl implements FeedUseCases {
   FeedUseCasesImpl({
     required FeedPresenter feedPresenter,
@@ -30,6 +32,7 @@ class FeedUseCasesImpl implements FeedUseCases {
         final (feedSource, feedItems) = await _feedRepository.getFeedByUrl(
           url,
           FeedType.predefined,
+          _authUseCases.getUser()?.uid,
         );
         // TODO: this could be done more efficiently
         _feedPresenter.setFeed(feedSource, feedItems);
@@ -39,36 +42,40 @@ class FeedUseCasesImpl implements FeedUseCases {
     }
   }
 
-  // TODO: solutions for strange bug when bookmarking from one
-  // feed overwrites the other bookmarked items
-  // only occurs when the same feed is added to both feed pages
-  // and the items from one of them overwrite the items from the other
-  // one in the presentation layer
+  @override
+  Future<void> loadPersonalFeeds() async {
+    final user = _authUseCases.getUser();
+    if (user == null) {
+      log("User must be logged in to load their personal feeds");
+      return;
+    }
 
-  // TODO: 1. whenever a personal feed is added which is
-  // also a default feed, move the default to the personal feeds
-  // instead of duplicating
+    log("loading personal feeds");
 
-  // TODO: 2. don't allow users to add personal feeds which are
-  // already present as default feeds
-
-  // TODO: 3. if a personal feed is loaded which is already present
-  // as a default (predefined) feed, set the feed's type to
-  // "predefinedAndPersonal" or smth to indicate that it
-  // needs to be shown on multiple presentation pages
+    try {
+      final feedList = await _feedRepository.getPersonalFeeds(user.uid);
+      for (final (source, items) in feedList) {
+        _feedPresenter.setFeed(source, items);
+      }
+    } catch (e) {
+      log("an error occurred while loading personal feeds", error: e);
+    }
+  }
 
   @override
-  Future<void> loadPersonalFeedSourceByUrl(String feedUrl) async {
+  Future<void> addPersonalFeedSourceByUrl(String feedUrl) async {
     final user = _authUseCases.getUser();
     if (user == null) {
       log("User must be logged in to add personal feeds");
       return;
     }
+    log("adding personal feed by url $feedUrl");
 
     try {
       final (feedSource, feedItems) = await _feedRepository.getFeedByUrl(
         feedUrl,
         FeedType.personal,
+        user.uid,
       );
       _feedPresenter.setFeed(feedSource, feedItems);
     } catch (e) {
@@ -96,6 +103,7 @@ class FeedUseCasesImpl implements FeedUseCases {
         final (feedSource, feedItems) = await _feedRepository.getFeedByUrl(
           source.rssUrl,
           source.type,
+          user.uid,
         );
         _feedPresenter.setFeed(feedSource, feedItems);
       }
@@ -124,7 +132,7 @@ class FeedUseCasesImpl implements FeedUseCases {
   }
 
   @override
-  Future<void> bookmarkToggleFeedItem(FeedItem item) async {
+  Future<void> toggleBookmarkFeedItem(FeedItem item) async {
     final user = _authUseCases.getUser();
     if (user == null) {
       log("User must be logged in to bookmark items");
@@ -146,20 +154,33 @@ class FeedUseCasesImpl implements FeedUseCases {
   }
 
   @override
-  Future<void> likeFeedItem(FeedItem item) async {
+  Future<void> toggleLikeFeedItem(FeedItem item) async {
     final user = _authUseCases.getUser();
     if (user == null) {
       log("User must be logged in to like items");
       return;
     }
 
-    log("likeFeedItem stub !");
+    item.liked = !item.liked;
+    if (item.liked) {
+      item.likes++;
+    } else {
+      item.likes--;
+    }
+
+    log("like feed item ${item.articleUrl}");
+    _feedRepository.saveFeedItem(item, user.uid);
   }
 
   @override
   Future<void> viewFeedItem(FeedItem item) async {
-    if (_authUseCases.getUser() == null) return;
 
-    log("viewFeedItem stub !");
+    // TODO: fix this ever-increasing mess
+
+    item.views += 1;
+    log("view feed item ${item.articleUrl}");
+
+    // user not required to save items
+    _feedRepository.saveFeedItem(item, null);
   }
 }

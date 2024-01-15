@@ -1,6 +1,5 @@
 import 'dart:developer';
 import 'package:flutter_readrss/data/feed_repository_impl.dart';
-import 'package:flutter_readrss/use_case/model/feed_source.dart';
 import "package:http/http.dart" as http;
 import 'package:webfeed/domain/rss_feed.dart';
 
@@ -85,7 +84,7 @@ class RssFetcher {
     return (
       FeedSourceModel(
         title: feed.title!,
-        siteUrl: feed.link ?? "",
+        siteUrl: feed.link,
         rssUrl: url,
         iconUrl: feed.image?.url,
         ttl: feed.ttl ?? 10,
@@ -116,7 +115,7 @@ class RssFetcher {
           feedSourceTitle: feed.title!,
           feedSourceRssUrl: rssUrl,
           title: rssItem.title!,
-          views: 0, // TODO: fetch this
+          views: 0, // TODO: fetch this - use another model which doesn't have these values
           likes: 0, // TODO: fetch this
           description: rssItem.description,
           articleUrl: rssItem.link!,

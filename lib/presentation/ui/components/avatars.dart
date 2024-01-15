@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_readrss/presentation/ui/styles/styles.dart';
 
@@ -21,11 +20,19 @@ class Avatar extends StatelessWidget {
 }
 
 class UserAvatar extends Avatar {
-  const UserAvatar({super.key, required image})
-      : super(image: image, width: userAvatarWidth);
+  UserAvatar({super.key, required String? imageUrl})
+      : super(
+          image: imageUrl != null
+              ? Image.network(imageUrl)
+              : Image.asset("assets/avatar.jpg"),
+          width: userAvatarWidth,
+        );
 }
 
 class FeedAvatar extends Avatar {
-  const FeedAvatar({super.key, required image})
-      : super(image: image, width: feedAvatarWidth);
+  FeedAvatar({super.key, required String? imageUrl})
+      : super(
+          image: imageUrl != null ? Image.network(imageUrl) : defaultFeedImage,
+          width: feedAvatarWidth,
+        );
 }

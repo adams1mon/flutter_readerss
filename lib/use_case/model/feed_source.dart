@@ -7,11 +7,12 @@ class FeedSource {
   final String id;
   final String title;
   final String rssUrl;
-  final String siteUrl;
+  final String? siteUrl;
   bool enabled;
   FeedType type;
 
-  final Image image;
+  // final Image image;
+  final String? iconUrl;
   final int ttl;
 
   FeedSource({
@@ -20,11 +21,13 @@ class FeedSource {
     required this.rssUrl,
     required this.type,
     required this.siteUrl,
-    this.enabled = true,
-    Image? image,
+    required this.enabled,
+    // required Image? image,
+    required this.iconUrl,
+    
     required this.ttl,
-    Set<FeedItem>? feedItems,
-  }) : image = image ?? defaultFeedImage;
+  }); 
+  // }) : image = image ?? defaultFeedImage;
 
   void toggleEnabled() {
     enabled = !enabled;

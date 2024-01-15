@@ -15,6 +15,8 @@ class FeedPage extends StatelessWidget {
     required this.title,
     required this.feedItemsStream,
     required this.toggleBookmark,
+    required this.toggleLike,
+    required this.increaseViewCount,
     this.noItemsText = "It seems like there are no feeds.\nTry to add some or enable them on the settings page!",
   });
 
@@ -23,6 +25,8 @@ class FeedPage extends StatelessWidget {
   final String noItemsText;
 
   final void Function(FeedItem) toggleBookmark;
+  final void Function(FeedItem) toggleLike;
+  final void Function(FeedItem) increaseViewCount;
 
   @override
   Widget build(BuildContext context) {
@@ -44,6 +48,8 @@ class FeedPage extends StatelessWidget {
           feedItemStream: feedItemsStream,
           noItemsText: noItemsText,
           toggleBookmark: toggleBookmark,
+          toggleLike: toggleLike,
+          increaseViewCount: increaseViewCount,
         ),
       ),
     );
@@ -56,11 +62,15 @@ class FeedList extends StatelessWidget {
     required this.feedItemStream,
     required this.noItemsText,
     required this.toggleBookmark,
+    required this.toggleLike,
+    required this.increaseViewCount,
   });
 
   final Stream<FeedItemsEvent> feedItemStream;
   final String noItemsText;
   final void Function(FeedItem) toggleBookmark;
+  final void Function(FeedItem) toggleLike;
+  final void Function(FeedItem) increaseViewCount;
 
   @override
   Widget build(BuildContext context) {
@@ -81,7 +91,9 @@ class FeedList extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 4.0),
                 child: FeedCard(
                   feedItem: items[index],
-                  toggleBookmarked: () => toggleBookmark(items[index])
+                  toggleBookmarked: () => toggleBookmark(items[index]),
+                  toggleLiked: () => toggleLike(items[index]),
+                  increaseViewCount: () => increaseViewCount(items[index]),
                 ),
               );
             },

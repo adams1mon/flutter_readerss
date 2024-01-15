@@ -5,6 +5,7 @@ import 'package:flutter_readrss/use_case/model/feed_item.dart';
 import 'package:flutter_readrss/use_case/model/feed_source.dart';
 
 
+// TODO: this class has use case leaks which should be moved to the use case layer
 // called by the use cases
 class FeedPresenterImpl implements FeedPresenter {
   final FeedSink _mainFeedSink;
@@ -21,7 +22,7 @@ class FeedPresenterImpl implements FeedPresenter {
     log("FeedPresenter: adding feed source ${source.title} and items");
     switch (source.type) {
       case FeedType.predefined:
-        _mainFeedSink.setFeedSource(source);
+        // don't publish predefined feed sources, they aren't shown anywhere in the UI
         _mainFeedSink.setFeedItems(source.rssUrl, items);
       case FeedType.personal:
         _personalFeedSink.setFeedSource(source);
@@ -34,7 +35,8 @@ class FeedPresenterImpl implements FeedPresenter {
     log("FeedPresenter: removing feed source ${source.title}");
     switch (source.type) {
       case FeedType.predefined:
-        _mainFeedSink.removeFeedSource(source);
+        // predefined feed sources cannot be removed 
+        break;
       case FeedType.personal:
         _personalFeedSink.removeFeedSource(source);
     }

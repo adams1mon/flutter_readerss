@@ -7,16 +7,19 @@ import 'package:flutter_readrss/presentation/ui/styles/styles.dart';
 
 import '../const/screen_route.dart';
 
-
 class FeedCard extends StatefulWidget {
   const FeedCard({
     super.key,
     required this.feedItem,
     required this.toggleBookmarked,
+    required this.toggleLiked,
+    required this.increaseViewCount,
   });
 
   final FeedItem feedItem;
   final void Function() toggleBookmarked;
+  final void Function() toggleLiked;
+  final void Function() increaseViewCount;
 
   @override
   State<FeedCard> createState() => _FeedCardState();
@@ -24,7 +27,6 @@ class FeedCard extends StatefulWidget {
 
 class _FeedCardState extends State<FeedCard> {
   var _expanded = false;
-  var _liked = false;
 
   void toggleExpanded() {
     setState(() => _expanded = !_expanded);
@@ -37,11 +39,13 @@ class _FeedCardState extends State<FeedCard> {
   }
 
   void toggleLiked() {
-    // TODO: call liking service
-    setState(() => _liked = !_liked);
+    setState(() {
+      widget.toggleLiked();
+    });
   }
 
   void navigateToWebViewPage() {
+    widget.increaseViewCount();
     log("navigating to the article's web page");
     Navigator.of(context).pushNamed(
       ScreenRoute.webview.route,
@@ -51,6 +55,7 @@ class _FeedCardState extends State<FeedCard> {
 
   @override
   Widget build(BuildContext context) {
+
     return Card(
       elevation: 2,
       child: Padding(
@@ -67,7 +72,6 @@ class _FeedCardState extends State<FeedCard> {
             FeedCardBody(
               feedItem: widget.feedItem,
               expanded: _expanded,
-              liked: _liked,
               toggleLiked: toggleLiked,
               openUrlInWebView: navigateToWebViewPage,
             ),
@@ -103,7 +107,7 @@ class FeedCardHeader extends StatelessWidget {
             flex: 2,
             child: Row(
               children: [
-                FeedAvatar(image: feedItem.sourceIcon),
+                FeedAvatar(imageUrl: feedItem.sourceIconUrl),
                 const SizedBox(width: 12),
                 Expanded(
                   flex: 4,
@@ -156,14 +160,12 @@ class FeedCardBody extends StatelessWidget {
     super.key,
     required this.feedItem,
     required this.expanded,
-    required this.liked,
     required this.toggleLiked,
     required this.openUrlInWebView,
   });
 
   final FeedItem feedItem;
   final bool expanded;
-  final bool liked;
   final void Function() toggleLiked;
   final void Function() openUrlInWebView;
 
@@ -193,7 +195,7 @@ class FeedCardBody extends StatelessWidget {
               padding: const EdgeInsets.only(top: 12.0),
               child: FeedCardBodyExpandedSection(
                 feedItem: feedItem,
-                liked: liked,
+                // liked: ,
                 toggleLiked: toggleLiked,
               ),
             ),
@@ -221,12 +223,10 @@ class FeedCardBodyExpandedSection extends StatelessWidget {
   const FeedCardBodyExpandedSection({
     super.key,
     required this.feedItem,
-    required this.liked,
     required this.toggleLiked,
   });
 
   final FeedItem feedItem;
-  final bool liked;
   final void Function() toggleLiked;
 
   bool feedItemHasDescription() {
@@ -258,7 +258,8 @@ class FeedCardBodyExpandedSection extends StatelessWidget {
             ),
             TextButton.icon(
               icon: Icon(
-                liked ? Icons.thumb_up : Icons.thumb_up_outlined,
+                // liked ? Icons.thumb_up : Icons.thumb_up_outlined,
+                feedItem.liked ? Icons.thumb_up : Icons.thumb_up_outlined,
                 color: colors(context).primary,
               ),
               label: Text(
@@ -270,7 +271,7 @@ class FeedCardBodyExpandedSection extends StatelessWidget {
               onPressed: toggleLiked,
               style: TextButton.styleFrom(
                 backgroundColor:
-                    colors(context).primary.withOpacity(liked ? 0.1 : 0.08),
+                    colors(context).primary.withOpacity(feedItem.liked ? 0.1 : 0.08),
                 foregroundColor: colors(context).primary,
               ),
             )

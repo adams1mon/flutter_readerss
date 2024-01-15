@@ -1,5 +1,3 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_readrss/presentation/ui/styles/styles.dart';
 
 // for the feed pages
 class FeedItem {
@@ -11,13 +9,12 @@ class FeedItem {
   bool liked;
   final String? description;
   final String articleUrl;
-
-  final Image sourceIcon;
+  final String? sourceIconUrl;
 
   final DateTime? pubDate;
 
-  final int views;
-  final int likes;
+  int views;
+  int likes;
 
   FeedItem({
     required this.id,
@@ -26,13 +23,13 @@ class FeedItem {
     required this.title,
     required this.description,
     required this.articleUrl,
-    Image? sourceIcon,
+    required this.sourceIconUrl,
     required this.pubDate,
     required this.views,
     required this.likes,
     required this.bookmarked,
     required this.liked, 
-  }) : sourceIcon = sourceIcon ?? defaultFeedImage;
+  });
 
   String getDate() {
     return "${pubDate!.year}/${pubDate!.month}/${pubDate!.day}";

@@ -21,9 +21,7 @@ class ReadrssAppBar extends AppBar {
                         ScreenRoute.user.route,
                       ),
                       child: UserAvatar(
-                        image: authUseCases.getUser()?.photoURL != null
-                            ? Image.network(authUseCases.getUser()!.photoURL!)
-                            : Image.asset("assets/avatar.jpg"),
+                        imageUrl: authUseCases.getUser()?.photoURL,
                       ),
                     )
                   : TextButton(
