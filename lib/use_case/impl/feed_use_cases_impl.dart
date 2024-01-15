@@ -10,6 +10,7 @@ import 'package:flutter_readrss/use_case/model/feed_item.dart';
 import 'package:flutter_readrss/use_case/model/feed_source.dart';
 
 // TODO: resolve 'scope leakage' between use case and repository layers (proper separation would help lol)
+// TODO: load bookmarked items when user is logged in
 
 class FeedUseCasesImpl implements FeedUseCases {
   FeedUseCasesImpl({
