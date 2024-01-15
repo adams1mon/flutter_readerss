@@ -1,4 +1,5 @@
 
+import 'package:flutter_readrss/data/feed_repository_impl.dart';
 import 'package:flutter_readrss/use_case/model/feed_item.dart';
 import 'package:flutter_readrss/use_case/model/feed_source.dart';
 
@@ -11,6 +12,8 @@ abstract class FeedRepository {
   );
 
   Future<List<(FeedSource, List<FeedItem>)>> getPersonalFeeds(String userId);
+
+  Future<(FeedSourceRepoModel, List<FeedItemRepoModel>)> fetchFeedByUrl(String url);
 
   Future saveFeedSource(FeedSource source, String userId);
   Future deleteFeedSource(FeedSource source, String userId);

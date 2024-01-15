@@ -10,10 +10,10 @@ import 'package:crypto/crypto.dart';
 
 // TODO: separate models fetched from the network and the ones saved in Firestore
 
-class FeedItemModel {
+class FeedItemRepoModel {
   final String id;
   final String feedSourceTitle;
-  final String feedSourceRssUrl; 
+  final String feedSourceRssUrl;
   final String title;
   final String? description;
   final String articleUrl;
@@ -22,7 +22,7 @@ class FeedItemModel {
   int views;
   int likes;
 
-  FeedItemModel({
+  FeedItemRepoModel({
     required this.feedSourceTitle,
     required this.feedSourceRssUrl,
     required this.title,
@@ -34,9 +34,9 @@ class FeedItemModel {
     required this.likes,
   }) : id = generateId(articleUrl);
 
-  factory FeedItemModel.fromFeedItem(FeedItem item) {
+  factory FeedItemRepoModel.fromFeedItem(FeedItem item) {
     // TODO: this calculates the id again...
-    return FeedItemModel(
+    return FeedItemRepoModel(
       feedSourceTitle: item.feedSourceTitle,
       feedSourceRssUrl: item.feedSourceRssUrl,
       title: item.title,
@@ -46,6 +46,26 @@ class FeedItemModel {
       pubDate: item.pubDate,
       views: item.views,
       likes: item.likes,
+    );
+  }
+
+  factory FeedItemRepoModel.fromNetworkModel(
+    FeedSourceNetworkModel feedNetworkModel,
+    FeedItemNetworkModel feedItemNetworkModel,
+    int views,
+    int likes,
+  ) {
+    // TODO: this calculates the id again...
+    return FeedItemRepoModel(
+      feedSourceTitle: feedNetworkModel.title,
+      feedSourceRssUrl: feedNetworkModel.rssUrl,
+      title: feedItemNetworkModel.title,
+      description: feedItemNetworkModel.description,
+      articleUrl: feedItemNetworkModel.articleUrl,
+      sourceIconUrl: feedItemNetworkModel.sourceIconUrl,
+      pubDate: feedItemNetworkModel.pubDate,
+      views: views,
+      likes: likes,
     );
   }
 
@@ -71,11 +91,11 @@ class FeedItemModel {
     return sha256.convert(identity).toString();
   }
 
-  factory FeedItemModel.fromFirebaseDoc(
+  factory FeedItemRepoModel.fromFirebaseDoc(
     DocumentSnapshot<Map<String, dynamic>> firebaseDoc,
   ) {
     // TODO: this calculates the id again...
-    return FeedItemModel(
+    return FeedItemRepoModel(
       feedSourceTitle: firebaseDoc.get("feedSourceTitle"),
       feedSourceRssUrl: firebaseDoc.get("feedSourceRssUrl"),
       title: firebaseDoc.get("title"),
@@ -104,7 +124,80 @@ class FeedItemModel {
 }
 
 // this is not stored in firebase, only returned by the rss fetcher (network 'model')
-class FeedSourceModel {
+
+class FeedSourceNetworkModel {
+  final String title;
+  final String rssUrl;
+  final String? siteUrl;
+  final String? iconUrl;
+  final int ttl;
+
+  FeedSourceNetworkModel({
+    required this.title,
+    required this.rssUrl,
+    required this.siteUrl,
+    required this.iconUrl,
+    required this.ttl,
+  });
+}
+
+class FeedItemNetworkModel {
+  final String title;
+  final String? description;
+  final String articleUrl;
+  final DateTime? pubDate;
+
+  FeedItemNetworkModel({
+    required this.title,
+    required this.description,
+    required this.articleUrl,
+    required this.pubDate,
+  });
+}
+
+class FeedSourceMapper {
+  static FeedSourceRepoModel fromNetworkModel(FeedSourceNetworkModel networkModel) {
+    return FeedSourceRepoModel(
+        title: networkModel.title,
+        rssUrl: networkModel.rssUrl,
+        siteUrl: networkModel.siteUrl,
+        iconUrl: networkModel.iconUrl,
+        ttl: networkModel.ttl);
+  }
+
+  // static FeedSource fromFeedSourceRepoModel(FeedSourceRepoModel repoModel) {
+  //   return FeedSource(
+  //       id: repoModel.id,
+  //       title: repoModel.title,
+  //       rssUrl: repoModel.rssUrl,
+  //       siteUrl: repoModel.siteUrl,
+  //       iconUrl: repoModel.iconUrl,
+  //       ttl: repoModel.ttl,);
+  // }
+}
+
+class FeedItemMapper {
+  static FeedItemRepoModel fromNetworkModel(
+    FeedItemNetworkModel itemNetworkModel,
+    FeedSourceNetworkModel sourceNetworkModel,
+    int views,
+    int likes,
+  ) {
+    return FeedItemRepoModel(
+      feedSourceTitle: sourceNetworkModel.title,
+      feedSourceRssUrl: sourceNetworkModel.rssUrl,
+      title: itemNetworkModel.title,
+      description: itemNetworkModel.description,
+      articleUrl: itemNetworkModel.articleUrl,
+      sourceIconUrl: sourceNetworkModel.iconUrl,
+      pubDate: itemNetworkModel.pubDate,
+      views: views,
+      likes: likes,
+    );
+  }
+}
+
+class FeedSourceRepoModel {
   final String id;
   final String title;
   final String rssUrl;
@@ -112,7 +205,7 @@ class FeedSourceModel {
   final String? iconUrl;
   final int ttl;
 
-  FeedSourceModel({
+  FeedSourceRepoModel({
     required this.title,
     required this.rssUrl,
     required this.siteUrl,
@@ -188,6 +281,47 @@ const personalFeedsCollection = "personalFeedSourceSettings";
 class FeedRepositoryImpl implements FeedRepository {
   final firestore = FirebaseFirestore.instance;
 
+  @override
+  Future<(FeedSourceRepoModel, List<FeedItemRepoModel>)> fetchFeedByUrl(String url) async {
+
+    log("fetching feed by url $url");
+
+    // TODO: error handling
+
+    // 1. fetch source and items as models
+    final (sourceNetworkModel, itemNetworkModels) = await RssFetcher.fetch(url);
+
+    // 2. fetch views + likes from the db
+    final feedItemModels = await Future.wait(
+      itemNetworkModels.map(
+        (itemNetworkModel) async {
+          final itemId = FeedItemRepoModel.generateId(itemNetworkModel.articleUrl);
+
+          final firestoreDoc =
+              await firestore.collection(feedItemsCollection).doc(itemId).get();
+
+          var views = 0;
+          var likes = 0;
+          if (firestoreDoc.exists) {
+            final itemModel = FeedItemRepoModel.fromFirebaseDoc(firestoreDoc);
+            views = itemModel.views;
+            likes = itemModel.likes;
+          }
+
+          return FeedItemMapper.fromNetworkModel(
+            itemNetworkModel,
+            sourceNetworkModel,
+            views,
+            likes,
+          );
+        },
+      ),
+    );
+
+    final feedSourceModel = FeedSourceMapper.fromNetworkModel(sourceNetworkModel);
+    return (feedSourceModel, feedItemModels);
+  }
+
   // TODO: remove feedType
   @override
   Future<(FeedSource, List<FeedItem>)> getFeedByUrl(
@@ -228,7 +362,7 @@ class FeedRepositoryImpl implements FeedRepository {
         var views = 0;
         var likes = 0;
         if (doc.data() != null) {
-          final itemModel = FeedItemModel.fromFirebaseDoc(doc);
+          final itemModel = FeedItemRepoModel.fromFirebaseDoc(doc);
           views = itemModel.views;
           likes = itemModel.likes;
         }
@@ -252,7 +386,7 @@ class FeedRepositoryImpl implements FeedRepository {
                   .doc(item.id)
                   .get())
               .exists;
-          
+
           log("bookmarked = $bookmarked;  liked = $liked;  url = ${item.articleUrl}");
         }
 
@@ -295,7 +429,7 @@ class FeedRepositoryImpl implements FeedRepository {
     // TODO: implement saveFeedItem
     log("repo save feed item");
 
-    final itemModel = FeedItemModel.fromFeedItem(item);
+    final itemModel = FeedItemRepoModel.fromFeedItem(item);
     await firestore
         .collection(feedItemsCollection)
         .doc(itemModel.id)
@@ -354,7 +488,7 @@ class FeedRepositoryImpl implements FeedRepository {
     // TODO: delete feed items if no one references them
     log("repo delete feed item");
 
-    final itemModel = FeedItemModel.fromFeedItem(item);
+    final itemModel = FeedItemRepoModel.fromFeedItem(item);
 
     // only deletes from the user's items
     final userDoc = firestore.collection(usersCollection).doc(userId);

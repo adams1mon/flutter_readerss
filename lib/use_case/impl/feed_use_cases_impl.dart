@@ -1,4 +1,3 @@
-
 import 'dart:developer';
 
 import 'package:flutter_readrss/use_case/auth_use_cases.dart';
@@ -24,6 +23,45 @@ class FeedUseCasesImpl implements FeedUseCases {
   final FeedPresenter _feedPresenter;
   final FeedRepository _feedRepository;
   final AuthUseCases _authUseCases;
+
+  // TODO:
+  // I. loading predefined feeds flow
+
+  // 1. fetch feed model + items from the network
+  // 2. fetch views + likes for all items from firebase (public collection, no auth required here)
+  // 3. if user is logged in, check if any items are saved for the user
+  // 4. present items of the feed
+
+  static const predefinedUrls = [
+    "https://abcnews.go.com/abcnews/internationalheadlines",
+    "http://rss.cnn.com/rss/edition.rss",
+    "https://feeds.bbci.co.uk/news/world/rss.xml",
+  ];
+
+  Future<void> loadPredefinedFeeds() async {
+    log("loading predefined urls: $predefinedUrls");
+
+    for (final url in predefinedUrls) {
+      // 1. fetch feed and its items + their views and likes
+      try {
+        final (feedSourceRepoModel, feedItemRepoModels) =
+            await _feedRepository.fetchFeedByUrl(url);
+
+        // 2. if the user is logged in, fetch bookmarked items from the predefined feeds
+
+      } catch (e) {
+        log("error while fetching predefined feed from url $url");
+      }
+    }
+  }
+
+  // II. loading personal feeds flow
+
+  // 1. fetch feed model + items from the network
+  // 2. fetch views + likes for all items from firebase (public collection, no auth required)
+  // 3. [user should be logged in] fetch liked + bookmarked status for all items from firebase
+  // 4. [user should be logged in] fetch enabled status for feed sources from firebase
+  // 5. present personal feed and its items
 
   @override
   Future<void> loadPredefinedFeedsByUrls(List<String> feedUrls) async {
@@ -175,7 +213,6 @@ class FeedUseCasesImpl implements FeedUseCases {
 
   @override
   Future<void> viewFeedItem(FeedItem item) async {
-
     // TODO: fix this ever-increasing mess
 
     item.views += 1;

@@ -30,7 +30,7 @@ class _RssParseException extends BaseException {
 }
 
 class RssFetcher {
-  static Future<(FeedSourceModel, List<FeedItemModel>)> fetch(
+  static Future<(FeedSourceNetworkModel, List<FeedItemNetworkModel>)> fetch(
     String url,
   ) async {
     log('trying to parse $url');
@@ -55,7 +55,7 @@ class RssFetcher {
     }
   }
 
-  static (FeedSourceModel, List<FeedItemModel>) _parseRssText({
+  static (FeedSourceNetworkModel, List<FeedItemNetworkModel>) _parseRssText({
     required String url,
     required String rssText,
   }) {
@@ -72,34 +72,22 @@ class RssFetcher {
       throw _RssParseException("No 'title' field found in the feed");
     }
 
-    // TODO: maybe check the image url so unexpected errors are caught here
-    // not on upper layers when trying to display the image
-    // final feedImage = feed.image?.url?.isNotEmpty == true
-    //     ? Image.network(feed.image!.url!)
-    //     : null;
-
-    // final feedItems = _createFeedItems(feed, url, feedImage);
-    final feedItems = _createFeedItems(feed, url, feed.image?.url);
+    final feedItems = _createFeedItems(feed);
 
     return (
-      FeedSourceModel(
+      FeedSourceNetworkModel(
         title: feed.title!,
-        siteUrl: feed.link,
         rssUrl: url,
+        siteUrl: feed.link,
         iconUrl: feed.image?.url,
         ttl: feed.ttl ?? 10,
       ),
-      feedItems
+      feedItems,
     );
   }
 
-  static List<FeedItemModel> _createFeedItems(
-    RssFeed feed,
-    String rssUrl,
-    // Image? feedSourceImage,
-    String? feedSourceImageUrl,
-  ) {
-    final feedItems = <FeedItemModel>[];
+  static List<FeedItemNetworkModel> _createFeedItems(RssFeed feed) {
+    final feedItems = <FeedItemNetworkModel>[];
 
     if (feed.items == null) {
       return feedItems;
@@ -109,22 +97,14 @@ class RssFetcher {
         .where((rssItem) => rssItem.title != null && rssItem.link != null)
         .map(
       (rssItem) {
-        // TODO: fetch views, likes and if the user liked the feed item from the backend
-
-        return FeedItemModel(
-          feedSourceTitle: feed.title!,
-          feedSourceRssUrl: rssUrl,
+        return FeedItemNetworkModel(
           title: rssItem.title!,
-          views: 0, // TODO: fetch this - use another model which doesn't have these values
-          likes: 0, // TODO: fetch this
           description: rssItem.description,
           articleUrl: rssItem.link!,
-          sourceIconUrl: feedSourceImageUrl,
           pubDate: rssItem.pubDate,
         );
       },
     ));
-
     return feedItems;
   }
 }
