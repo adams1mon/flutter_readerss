@@ -2,6 +2,7 @@ import 'dart:developer';
 
 import 'package:flutter_readrss/data/feed_repository_impl.dart';
 import 'package:flutter_readrss/use_case/auth_use_cases.dart';
+import 'package:flutter_readrss/use_case/const/main_rss_feeds.dart';
 import 'package:flutter_readrss/use_case/exceptions/use_case_exceptions.dart';
 import 'package:flutter_readrss/use_case/feed_presenter.dart';
 import 'package:flutter_readrss/use_case/feed_repository.dart';
@@ -68,9 +69,9 @@ class FeedItemDetails {
 
 // user-specific feed source details
 class FeedSourceDetails {
-  String feedSourceId;
+  String feedSourceUrl;
   bool enabled;
-  FeedSourceDetails({required this.feedSourceId, required this.enabled});
+  FeedSourceDetails({required this.feedSourceUrl, required this.enabled});
 }
 
 class FeedUseCasesImpl implements FeedUseCases {
@@ -94,18 +95,12 @@ class FeedUseCasesImpl implements FeedUseCases {
   // 3. if user is logged in, check if any items are saved for the user
   // 4. present items of the feed
 
-  static const predefinedUrls = [
-    "https://abcnews.go.com/abcnews/internationalheadlines",
-    "http://rss.cnn.com/rss/edition.rss",
-    "https://feeds.bbci.co.uk/news/world/rss.xml",
-  ];
-
   @override
   Future<void> loadPredefinedFeeds() async {
-    log("loading predefined urls: $predefinedUrls");
+    log("loading predefined urls: $mainFeedRssUrls");
 
     final user = _authUseCases.getUser();
-    for (final url in predefinedUrls) {
+    for (final url in mainFeedRssUrls) {
       // 1. fetch feed and its items + their views and likes
       try {
         final (feedSourceRepoModel, feedItemRepoModels) =
@@ -143,7 +138,8 @@ class FeedUseCasesImpl implements FeedUseCases {
 
         _feedPresenter.setFeed(feedSource, feedItems);
       } catch (e) {
-        log("error while fetching predefined feed from url $url");
+        log("error while fetching predefined feed from url $url", error: e);
+        throw UseCaseException("Error while loading main feeds");
       }
     }
   }
@@ -197,6 +193,7 @@ class FeedUseCasesImpl implements FeedUseCases {
       }
     } catch (e) {
       log("error while fetching personal feeds");
+      throw UseCaseException("Error while loading personal feeds");
     }
   }
 
@@ -221,10 +218,10 @@ class FeedUseCasesImpl implements FeedUseCases {
       final (details, repoModel) = itemTuple;
       return FeedItemMapper.fromRepoModel(
           repoModel, details.bookmarked, details.liked);
-    });
+    }).toList();
 
     // TODO: set bookmarked feed items in presenter
-    // _feedPresenter.
+    _feedPresenter.setBookmarkedFeedItems(feedItems);
   }
 
   @override
@@ -266,6 +263,7 @@ class FeedUseCasesImpl implements FeedUseCases {
       _feedPresenter.setFeed(feedSource, feedItems);
     } catch (e) {
       log("error while adding personal feed from url $url");
+      throw UseCaseException("Error while adding personal feed");
     }
   }
 
@@ -281,7 +279,7 @@ class FeedUseCasesImpl implements FeedUseCases {
       source.enabled = !source.enabled;
 
       final feedSourceDetails = FeedSourceDetails(
-        feedSourceId: source.id,
+        feedSourceUrl: source.rssUrl,
         enabled: source.enabled,
       );
       await _feedRepository.saveFeedSourceDetails(user.uid, feedSourceDetails);
@@ -317,6 +315,7 @@ class FeedUseCasesImpl implements FeedUseCases {
       }
     } catch (e) {
       log("an error occurred while toggleing feed source $source", error: e);
+      throw UseCaseException("Error while toggleing feed source");
     }
   }
 
@@ -330,14 +329,16 @@ class FeedUseCasesImpl implements FeedUseCases {
 
     try {
       final feedSourceDetails = FeedSourceDetails(
-        feedSourceId: source.id,
+        feedSourceUrl: source.rssUrl,
         enabled: source.enabled,
       );
-      await _feedRepository.deleteFeedSourceDetails(user.uid, feedSourceDetails);
+      await _feedRepository.deleteFeedSourceDetails(
+          user.uid, feedSourceDetails);
       _feedPresenter.setFeed(source, []);
       _feedPresenter.removeFeedSource(source);
     } catch (e) {
-      log("an error occurred while toggleing feed source $source", error: e);
+      log("an error occurred while deleting feed source $source", error: e);
+      throw UseCaseException("Error while deleting feed source");
     }
   }
 
@@ -358,7 +359,8 @@ class FeedUseCasesImpl implements FeedUseCases {
         liked: item.liked,
         bookmarked: item.bookmarked,
       );
-      if (item.bookmarked) {
+      // only save the item if there is a reason to
+      if (item.liked || item.bookmarked) {
         await _feedRepository.saveFeedItemDetails(user.uid, itemDetails);
       } else {
         await _feedRepository.deleteFeedItemDetails(user.uid, itemDetails);
@@ -366,6 +368,7 @@ class FeedUseCasesImpl implements FeedUseCases {
       _feedPresenter.updateFeedItem(item);
     } catch (e) {
       log("error while bookmarking feed item $item", error: e);
+      throw UseCaseException("Error while bookmarking feed item");
     }
   }
 
@@ -383,14 +386,42 @@ class FeedUseCasesImpl implements FeedUseCases {
     } else {
       item.likes--;
     }
-    final itemDetails = FeedItemDetails(
-      feedItemId: item.id,
-      liked: item.liked,
-      bookmarked: item.bookmarked,
-    );
-    log("like feed item ${item.articleUrl}");
 
-    _feedRepository.saveFeedItemDetails(user.uid, itemDetails);
+    try {
+      // TODO: why does the use case layer know about how items are stored? (common and personal part separate)
+      // save common part 
+      final feedItemModel = FeedItemRepoModel(
+        feedSourceTitle: item.feedSourceTitle,
+        feedSourceRssUrl: item.feedSourceRssUrl,
+        title: item.title,
+        description: item.description,
+        articleUrl: item.articleUrl,
+        sourceIconUrl: item.sourceIconUrl,
+        pubDate: item.pubDate,
+        views: item.views,
+        likes: item.likes,
+      );
+      _feedRepository.saveFeedItem(feedItemModel);
+
+      // update user-specific part
+      final itemDetails = FeedItemDetails(
+        feedItemId: item.id,
+        liked: item.liked,
+        bookmarked: item.bookmarked,
+      );
+      // only save the item if there is a reason to
+      if (item.liked || item.bookmarked) {
+        await _feedRepository.saveFeedItemDetails(user.uid, itemDetails);
+      } else {
+        await _feedRepository.deleteFeedItemDetails(user.uid, itemDetails);
+      }
+      log("like feed item ${item.articleUrl}");
+
+      _feedRepository.saveFeedItemDetails(user.uid, itemDetails);
+    } catch (e) {
+      log("error while toggleing feed item like", error: e);
+      throw UseCaseException("Error while liking feed item");
+    }
   }
 
   @override
@@ -402,8 +433,13 @@ class FeedUseCasesImpl implements FeedUseCases {
 
     final feedItemRepoModel = FeedItemRepoModel.fromFeedItem(item);
 
-    // user not required to save items
-    _feedRepository.saveFeedItem(feedItemRepoModel);
+    try {
+      // user not required to save items
+      _feedRepository.saveFeedItem(feedItemRepoModel);
+    } catch (e) {
+      log("error while updating feed item views", error: e);
+      throw UseCaseException("Error while updating feed item views");
+    }
   }
 
   // @override

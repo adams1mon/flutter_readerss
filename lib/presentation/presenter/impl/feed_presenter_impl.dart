@@ -10,12 +10,15 @@ import 'package:flutter_readrss/use_case/model/feed_source.dart';
 class FeedPresenterImpl implements FeedPresenter {
   final FeedSink _mainFeedSink;
   final FeedSink _personalFeedSink;
+  final FeedSink _bookmarkFeedSink;
 
   FeedPresenterImpl({
     required FeedSink mainFeedSink,
     required FeedSink personalFeedSink,
+    required FeedSink bookmarkFeedSink,
   })  : _mainFeedSink = mainFeedSink,
-        _personalFeedSink = personalFeedSink;
+        _personalFeedSink = personalFeedSink,
+        _bookmarkFeedSink = bookmarkFeedSink;
 
   @override
   void setFeed(FeedSource source, List<FeedItem> items) {
@@ -28,6 +31,13 @@ class FeedPresenterImpl implements FeedPresenter {
         _personalFeedSink.setFeedSource(source);
         _personalFeedSink.setFeedItems(source.rssUrl, items);
     }
+  }
+
+  @override
+  void setBookmarkedFeedItems(List<FeedItem> feedItems) {
+    log("FeedPresenter: setting bookmarked feed items");
+    // use a dummy rssUrl
+    _bookmarkFeedSink.setFeedItems("bookmarkedItems", feedItems);
   }
 
   @override
@@ -49,5 +59,6 @@ class FeedPresenterImpl implements FeedPresenter {
     // so we have a consistent UI
     _mainFeedSink.updateFeedItem(feedItem);
     _personalFeedSink.updateFeedItem(feedItem);
+    _bookmarkFeedSink.updateFeedItem(feedItem);
   }
 }

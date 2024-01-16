@@ -232,6 +232,28 @@ class FeedSourceRepoModel {
       enabled: enabled,
     );
   }
+
+  // factory FeedSourceRepoModel.fromFirebaseDoc(
+  //   DocumentSnapshot<Map<String, dynamic>> firebaseDoc,
+  // ) {
+  //   return FeedSourceRepoModel(
+  //     title: firebaseDoc.get("title"),
+  //     rssUrl: firebaseDoc.get("rssUrl"),
+  //     siteUrl: firebaseDoc.get("siteUrl"),
+  //     iconUrl: firebaseDoc.get("iconUrl"),
+  //     ttl: firebaseDoc.get("ttl"),
+  //   );
+  // }
+
+  // Map<String, dynamic> toFirestoreDoc() {
+  //   return <String, dynamic>{
+  //     "title": title,
+  //     "rssUrl": rssUrl,
+  //     "siteUrl": siteUrl,
+  //     "iconUrl": iconUrl,
+  //     "ttl": ttl,
+  //   };
+  // }
 }
 
 class PersonalFeedSourceModel {
@@ -240,6 +262,7 @@ class PersonalFeedSourceModel {
   final bool enabled;
 
   PersonalFeedSourceModel({
+    // required this.feedSourceId,
     required this.feedSourceUrl,
     required this.enabled,
   }) : id = generateId(feedSourceUrl);
@@ -255,13 +278,6 @@ class PersonalFeedSourceModel {
     return PersonalFeedSourceModel(
       feedSourceUrl: firebaseDoc.get("feedSourceUrl"),
       enabled: firebaseDoc.get("enabled"),
-    );
-  }
-
-  factory PersonalFeedSourceModel.fromFeedSource(FeedSource source) {
-    return PersonalFeedSourceModel(
-      feedSourceUrl: source.id,
-      enabled: source.enabled,
     );
   }
 
@@ -287,10 +303,11 @@ class PersonalFeedItemModel {
   factory PersonalFeedItemModel.fromFirebaseDoc(
     DocumentSnapshot<Map<String, dynamic>> firebaseDoc,
   ) {
+    
     return PersonalFeedItemModel(
       feedItemId: firebaseDoc.get("feedItemId"),
-      bookmarked: firebaseDoc.get("bookmarked") ?? false,
-      liked: firebaseDoc.get("liked") ?? false,
+      bookmarked: firebaseDoc.data()?.containsKey("bookmarked") == true ? firebaseDoc.get("bookmarked") : false,
+      liked: firebaseDoc.data()?.containsKey("liked") == true ? firebaseDoc.get("liked") : false,
     );
   }
 
@@ -303,11 +320,11 @@ class PersonalFeedItemModel {
   }
 }
 
-const feedSourcesCollection = "feedSources";
+// const feedSourcesCollection = "feedSources";
 const feedItemsCollection = "feedItems";
 const usersCollection = "users";
-const likedItemsCollection = "likedFeedItems";
-const bookmarkedItemsCollection = "bookmarkedFeedItems";
+// const likedItemsCollection = "likedFeedItems";
+// const bookmarkedItemsCollection = "bookmarkedFeedItems";
 const personalFeedsCollection = "personalFeedSourceDetails";
 const personalFeedItemsCollection = "personalFeedItemDetails";
 
@@ -372,20 +389,50 @@ class FeedRepositoryImpl implements FeedRepository {
         .collection(personalFeedsCollection)
         .get();
 
-    final feedSourcesAndItems =
-        <(FeedSourceDetails, FeedSourceRepoModel, List<FeedItemRepoModel>)>[];
+    return Future.wait(
+      feedCollection.docs.map((doc) async {
+        final personalFeed = PersonalFeedSourceModel.fromFirebaseDoc(doc);
 
-    for (final doc in feedCollection.docs) {
-      final personalFeed = PersonalFeedSourceModel.fromFirebaseDoc(doc);
+        final sourceDetails = FeedSourceDetails(
+            feedSourceUrl: personalFeed.feedSourceUrl,
+            enabled: personalFeed.enabled);
 
-      final sourceDetails = FeedSourceDetails(
-          feedSourceId: personalFeed.id, enabled: personalFeed.enabled);
+        // fetch every feed by url
+        final (source, items) =
+            await fetchFeedByUrl(personalFeed.feedSourceUrl);
+        return (sourceDetails, source, items);
+      }),
+    );
+  }
 
-      // fetch every feed by url
-      final (source, items) = await fetchFeedByUrl(personalFeed.feedSourceUrl);
-      feedSourcesAndItems.add((sourceDetails, source, items));
-    }
-    return feedSourcesAndItems;
+  @override
+  Future<List<(FeedItemDetails, FeedItemRepoModel)>> fetchBookmarkedFeedItems(
+      String userId) async {
+    final query = await firestore
+        .collection(usersCollection)
+        .doc(userId)
+        .collection(personalFeedItemsCollection)
+        .where("bookmarked", isEqualTo: true)
+        .get();
+
+    return Future.wait(query.docs.map((doc) async {
+      final personalItemModel = PersonalFeedItemModel.fromFirebaseDoc(doc);
+
+      final itemDoc = await firestore
+          .collection(feedItemsCollection)
+          .doc(personalItemModel.feedItemId)
+          .get();
+
+      if (!itemDoc.exists) throw Exception("item doesn't exist...");
+
+      final commonModel = FeedItemRepoModel.fromFirebaseDoc(itemDoc);
+      final detailsModel = FeedItemDetails(
+          feedItemId: personalItemModel.feedItemId,
+          liked: personalItemModel.liked,
+          bookmarked: personalItemModel.bookmarked);
+
+      return (detailsModel, commonModel);
+    }));
   }
 
   @override
@@ -399,7 +446,8 @@ class FeedRepositoryImpl implements FeedRepository {
         .get();
     if (!doc.exists) return null;
     final model = PersonalFeedSourceModel.fromFirebaseDoc(doc);
-    return FeedSourceDetails(feedSourceId: model.id, enabled: model.enabled);
+    return FeedSourceDetails(
+        feedSourceUrl: model.feedSourceUrl, enabled: model.enabled);
   }
 
   @override
@@ -420,6 +468,87 @@ class FeedRepositoryImpl implements FeedRepository {
         feedItemId: model.feedItemId,
         liked: model.liked,
         bookmarked: model.bookmarked);
+  }
+
+  // save a feed item in a global collection
+  @override
+  Future saveFeedItem(FeedItemRepoModel feedItem) async {
+    log("repo save feed item");
+    await firestore
+        .collection(feedItemsCollection)
+        .doc(feedItem.id)
+        .set(feedItem.toFirestoreDoc());
+  }
+
+  @override
+  Future saveFeedItemDetails(String userId, FeedItemDetails itemDetails) async {
+    log("repo save feed item details");
+
+    final itemDoc = PersonalFeedItemModel(
+        feedItemId: itemDetails.feedItemId,
+        liked: itemDetails.liked,
+        bookmarked: itemDetails.bookmarked);
+
+    await firestore
+        .collection(usersCollection)
+        .doc(userId)
+        .collection(personalFeedItemsCollection)
+        .doc(itemDoc.feedItemId)
+        .set(itemDoc.toFirestoreDoc());
+  }
+
+  @override
+  Future deleteFeedItemDetails(
+      String userId, FeedItemDetails itemDetails) async {
+    // TODO: delete feed items if no one references them
+    log("repo delete feed item");
+
+    final itemModel = PersonalFeedItemModel(
+        feedItemId: itemDetails.feedItemId,
+        liked: itemDetails.liked,
+        bookmarked: itemDetails.bookmarked);
+
+    // only deletes from the user's items
+    final userDoc = firestore.collection(usersCollection).doc(userId);
+
+    await userDoc
+        .collection(personalFeedItemsCollection)
+        .doc(itemModel.feedItemId)
+        .delete();
+  }
+
+  @override
+  Future saveFeedSourceDetails(
+      String userId, FeedSourceDetails feedSourceDetails) async {
+    log("repo save feed source details");
+
+    final personalFeedModel = PersonalFeedSourceModel(
+        feedSourceUrl: feedSourceDetails.feedSourceUrl,
+        enabled: feedSourceDetails.enabled);
+
+    await firestore
+        .collection(usersCollection)
+        .doc(userId)
+        .collection(personalFeedsCollection)
+        .doc(personalFeedModel.id)
+        .set(personalFeedModel.toFirestoreDoc());
+  }
+
+  @override
+  Future deleteFeedSourceDetails(
+      String userId, FeedSourceDetails feedSourceDetails) async {
+    log("repo delete feed source");
+
+    final personalFeedModel = PersonalFeedSourceModel(
+        feedSourceUrl: feedSourceDetails.feedSourceUrl,
+        enabled: feedSourceDetails.enabled);
+
+    await firestore
+        .collection(usersCollection)
+        .doc(userId)
+        .collection(personalFeedsCollection)
+        .doc(personalFeedModel.id)
+        .set(personalFeedModel.toFirestoreDoc());
   }
 
   // TODO: remove feedType
@@ -524,32 +653,6 @@ class FeedRepositoryImpl implements FeedRepository {
   //   return feedSourcesAndItems;
   //
 
-  @override
-  Future saveFeedItem(FeedItemRepoModel feedItem) async {
-    log("repo save feed item");
-    await firestore
-        .collection(feedItemsCollection)
-        .doc(feedItem.id)
-        .set(feedItem.toFirestoreDoc());
-  }
-
-  @override
-  Future saveFeedItemDetails(String userId, FeedItemDetails itemDetails) async {
-    log("repo save feed item details");
-
-    final itemDoc = PersonalFeedItemModel(
-        feedItemId: itemDetails.feedItemId,
-        liked: itemDetails.liked,
-        bookmarked: itemDetails.bookmarked);
-
-    await firestore
-        .collection(usersCollection)
-        .doc(userId)
-        .collection(personalFeedItemsCollection)
-        .doc(itemDoc.feedItemId)
-        .set(itemDoc.toFirestoreDoc());
-  }
-
   // @override
   // Future saveFeedItem(FeedItem item, String? userId) async {
   //   // TODO: implement saveFeedItem
@@ -596,52 +699,34 @@ class FeedRepositoryImpl implements FeedRepository {
   //   }
   // }
 
-  @override
-  Future saveFeedSource(FeedSource source, String userId) async {
-    log("repo save feed source");
+  // @override
+  // Future saveFeedSource(FeedSource source, String userId) async {
+  //   log("repo save feed source");
 
-    final personalFeedModel = PersonalFeedSourceModel.fromFeedSource(source);
-    await firestore
-        .collection(usersCollection)
-        .doc(userId)
-        .collection(personalFeedsCollection)
-        .doc(personalFeedModel.id)
-        .set(personalFeedModel.toFirestoreDoc());
-  }
+  //   final personalFeedModel = PersonalFeedSourceModel.fromFeedSource(source);
+  //   await firestore
+  //       .collection(usersCollection)
+  //       .doc(userId)
+  //       .collection(personalFeedsCollection)
+  //       .doc(personalFeedModel.id)
+  //       .set(personalFeedModel.toFirestoreDoc());
+  // }
 
-  @override
-  Future deleteFeedItem(FeedItem item, String userId) async {
-    // TODO: delete feed items if no one references them
-    log("repo delete feed item");
+  // @override
+  // Future deleteFeedSource(FeedSource source, String userId) async {
+  //   // TODO: delete feed sources if no one references them
+  //   log("repo delete feed source");
 
-    final itemModel = FeedItemRepoModel.fromFeedItem(item);
+  //   final personalFeedModel = PersonalFeedSourceModel.fromFeedSource(source);
 
-    // only deletes from the user's items
-    final userDoc = firestore.collection(usersCollection).doc(userId);
+  //   // only deletes from the user's feed settings, not the global feed source
+  //   final userDoc = firestore.collection(usersCollection).doc(userId);
 
-    await userDoc.collection(likedItemsCollection).doc(itemModel.id).delete();
-
-    await userDoc
-        .collection(bookmarkedItemsCollection)
-        .doc(itemModel.id)
-        .delete();
-  }
-
-  @override
-  Future deleteFeedSource(FeedSource source, String userId) async {
-    // TODO: delete feed sources if no one references them
-    log("repo delete feed source");
-
-    final personalFeedModel = PersonalFeedSourceModel.fromFeedSource(source);
-
-    // only deletes from the user's feed settings, not the global feed source
-    final userDoc = firestore.collection(usersCollection).doc(userId);
-
-    await userDoc
-        .collection(personalFeedsCollection)
-        .doc(personalFeedModel.feedSourceUrl)
-        .delete();
-  }
+  //   await userDoc
+  //       .collection(personalFeedsCollection)
+  //       .doc(personalFeedModel.feedSourceUrl)
+  //       .delete();
+  // }
 }
 
 // TODO:

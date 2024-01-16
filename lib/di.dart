@@ -11,13 +11,16 @@ final repository = FeedRepositoryImpl();
 
 final mainFeedConnector = FeedConnector();
 final personalFeedConnector = FeedConnector();
-final bookmarksFeedConnector = BookmarkFeedProviderImpl(
-  feedProviders: [mainFeedConnector, personalFeedConnector],
-);
+final bookmarksFeedConnector = FeedConnector();
+
+// final bookmarksFeedConnector = BookmarkFeedProviderImpl(
+//   feedProviders: [mainFeedConnector, personalFeedConnector],
+// );
 
 final presenter = FeedPresenterImpl(
   mainFeedSink: mainFeedConnector,
   personalFeedSink: personalFeedConnector,
+  bookmarkFeedSink: bookmarksFeedConnector,
 );
 
 final authUseCases = AuthUseCasesImpl();

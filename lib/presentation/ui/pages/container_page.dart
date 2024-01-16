@@ -34,7 +34,9 @@ class _ContainerPageState extends State<ContainerPage> {
     super.initState();
     // TODO: finish testing this -> should be 
     // initMainFeedWithMocks();
-    feedUseCases.loadPredefinedFeedsByUrls(mainFeedRssUrls);
+    // feedUseCases.loadPredefinedFeedsByUrls(mainFeedRssUrls);
+    feedUseCases.loadPredefinedFeeds();
+    feedUseCases.loadPersonalFeeds();
   }
 
   @override

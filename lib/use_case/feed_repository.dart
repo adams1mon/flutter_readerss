@@ -27,6 +27,7 @@ abstract class FeedRepository {
 
   Future<List<(FeedItemDetails, FeedItemRepoModel)>> fetchBookmarkedFeedItems(String userId);
 
+  // Future saveFeedSource(FeedSourceRepoModel feedSource);
   Future saveFeedSourceDetails(String userId, FeedSourceDetails feedSourceDetails);
   Future deleteFeedSourceDetails(String userId, FeedSourceDetails feedSourceDetails);
 
