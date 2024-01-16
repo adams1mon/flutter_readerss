@@ -4,6 +4,7 @@ import 'dart:developer';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_readrss/data/rss_fetcher.dart';
 import 'package:flutter_readrss/use_case/feed_repository.dart';
+import 'package:flutter_readrss/use_case/impl/feed_use_cases_impl.dart';
 import 'package:flutter_readrss/use_case/model/feed_item.dart';
 import 'package:flutter_readrss/use_case/model/feed_source.dart';
 import 'package:crypto/crypto.dart';
@@ -50,19 +51,19 @@ class FeedItemRepoModel {
   }
 
   factory FeedItemRepoModel.fromNetworkModel(
-    FeedSourceNetworkModel feedNetworkModel,
+    FeedSourceNetworkModel feedSourceNetworkModel,
     FeedItemNetworkModel feedItemNetworkModel,
     int views,
     int likes,
   ) {
     // TODO: this calculates the id again...
     return FeedItemRepoModel(
-      feedSourceTitle: feedNetworkModel.title,
-      feedSourceRssUrl: feedNetworkModel.rssUrl,
+      feedSourceTitle: feedSourceNetworkModel.title,
+      feedSourceRssUrl: feedSourceNetworkModel.rssUrl,
       title: feedItemNetworkModel.title,
       description: feedItemNetworkModel.description,
       articleUrl: feedItemNetworkModel.articleUrl,
-      sourceIconUrl: feedItemNetworkModel.sourceIconUrl,
+      sourceIconUrl: feedSourceNetworkModel.iconUrl,
       pubDate: feedItemNetworkModel.pubDate,
       views: views,
       likes: likes,
@@ -156,7 +157,8 @@ class FeedItemNetworkModel {
 }
 
 class FeedSourceMapper {
-  static FeedSourceRepoModel fromNetworkModel(FeedSourceNetworkModel networkModel) {
+  static FeedSourceRepoModel fromNetworkModel(
+      FeedSourceNetworkModel networkModel) {
     return FeedSourceRepoModel(
         title: networkModel.title,
         rssUrl: networkModel.rssUrl,
@@ -265,8 +267,38 @@ class PersonalFeedSourceModel {
 
   Map<String, dynamic> toFirestoreDoc() {
     return <String, dynamic>{
-      "feedSourceId": feedSourceUrl,
+      "feedSourceUrl": feedSourceUrl,
       "enabled": enabled,
+    };
+  }
+}
+
+class PersonalFeedItemModel {
+  final String feedItemId;
+  final bool liked;
+  final bool bookmarked;
+
+  PersonalFeedItemModel({
+    required this.feedItemId,
+    required this.liked,
+    required this.bookmarked,
+  });
+
+  factory PersonalFeedItemModel.fromFirebaseDoc(
+    DocumentSnapshot<Map<String, dynamic>> firebaseDoc,
+  ) {
+    return PersonalFeedItemModel(
+      feedItemId: firebaseDoc.get("feedItemId"),
+      bookmarked: firebaseDoc.get("bookmarked") ?? false,
+      liked: firebaseDoc.get("liked") ?? false,
+    );
+  }
+
+  Map<String, dynamic> toFirestoreDoc() {
+    return <String, dynamic>{
+      "feedItemId": feedItemId,
+      if (liked) "liked": true,
+      if (bookmarked) "bookmarked": true,
     };
   }
 }
@@ -276,26 +308,28 @@ const feedItemsCollection = "feedItems";
 const usersCollection = "users";
 const likedItemsCollection = "likedFeedItems";
 const bookmarkedItemsCollection = "bookmarkedFeedItems";
-const personalFeedsCollection = "personalFeedSourceSettings";
+const personalFeedsCollection = "personalFeedSourceDetails";
+const personalFeedItemsCollection = "personalFeedItemDetails";
 
 class FeedRepositoryImpl implements FeedRepository {
   final firestore = FirebaseFirestore.instance;
 
   @override
-  Future<(FeedSourceRepoModel, List<FeedItemRepoModel>)> fetchFeedByUrl(String url) async {
-
+  Future<(FeedSourceRepoModel, List<FeedItemRepoModel>)> fetchFeedByUrl(
+      String url) async {
     log("fetching feed by url $url");
 
     // TODO: error handling
 
-    // 1. fetch source and items as models
+    // 1. fetch source and items from the rss sites
     final (sourceNetworkModel, itemNetworkModels) = await RssFetcher.fetch(url);
 
     // 2. fetch views + likes from the db
     final feedItemModels = await Future.wait(
       itemNetworkModels.map(
         (itemNetworkModel) async {
-          final itemId = FeedItemRepoModel.generateId(itemNetworkModel.articleUrl);
+          final itemId =
+              FeedItemRepoModel.generateId(itemNetworkModel.articleUrl);
 
           final firestoreDoc =
               await firestore.collection(feedItemsCollection).doc(itemId).get();
@@ -318,88 +352,19 @@ class FeedRepositoryImpl implements FeedRepository {
       ),
     );
 
-    final feedSourceModel = FeedSourceMapper.fromNetworkModel(sourceNetworkModel);
+    final feedSourceModel =
+        FeedSourceMapper.fromNetworkModel(sourceNetworkModel);
     return (feedSourceModel, feedItemModels);
   }
 
-  // TODO: remove feedType
   @override
-  Future<(FeedSource, List<FeedItem>)> getFeedByUrl(
-      String url, FeedType feedType, String? userId) async {
-    log("getting feed by url $url");
-
-    // TODO: error handling
-
-    // 1. fetch source and items as models
-    final (feedSourceModel, feedItemModels) = await RssFetcher.fetch(url);
-
-    // 2. combine necessary stuff to make business objects, fetch likes and views, etc. for the current user
-    var sourceEnabled = true;
-
-    if (feedType == FeedType.personal && userId != null) {
-      // is this source saved for the user?
-      final personalFeedSource = await firestore
-          .collection(usersCollection)
-          .doc(userId)
-          .collection(personalFeedsCollection)
-          .doc(PersonalFeedSourceModel.generateId(url))
-          .get();
-
-      if (personalFeedSource.exists) {
-        sourceEnabled =
-            PersonalFeedSourceModel.fromFirebaseDoc(personalFeedSource).enabled;
-      }
-    }
-
-    final feedSource = feedSourceModel.toFeedSource(feedType, sourceEnabled);
-
-    final feedItems = await Future.wait(
-      feedItemModels.map((item) async {
-        // update views & likes if it's stored
-        final doc =
-            await firestore.collection(feedItemsCollection).doc(item.id).get();
-
-        var views = 0;
-        var likes = 0;
-        if (doc.data() != null) {
-          final itemModel = FeedItemRepoModel.fromFirebaseDoc(doc);
-          views = itemModel.views;
-          likes = itemModel.likes;
-        }
-        item.views = views;
-        item.likes = likes;
-
-        // bookmarked & liked ?
-        var bookmarked = false;
-        var liked = false;
-
-        if (userId != null) {
-          final userDoc = firestore.collection(usersCollection).doc(userId);
-          bookmarked = (await userDoc
-                  .collection(bookmarkedItemsCollection)
-                  .doc(item.id)
-                  .get())
-              .exists;
-
-          liked = (await userDoc
-                  .collection(likedItemsCollection)
-                  .doc(item.id)
-                  .get())
-              .exists;
-
-          log("bookmarked = $bookmarked;  liked = $liked;  url = ${item.articleUrl}");
-        }
-
-        return item.toFeedItem(liked, bookmarked);
-      }),
-    );
-
-    return (feedSource, feedItems);
-  }
-
-  @override
-  Future<List<(FeedSource, List<FeedItem>)>> getPersonalFeeds(
-      String userId) async {
+  Future<
+      List<
+          (
+            FeedSourceDetails,
+            FeedSourceRepoModel,
+            List<FeedItemRepoModel>,
+          )>> fetchPersonalFeeds(String userId) async {
     // get personal feeds
     final feedCollection = await firestore
         .collection(usersCollection)
@@ -407,68 +372,229 @@ class FeedRepositoryImpl implements FeedRepository {
         .collection(personalFeedsCollection)
         .get();
 
-    final feedSourcesAndItems = <(FeedSource, List<FeedItem>)>[];
+    final feedSourcesAndItems =
+        <(FeedSourceDetails, FeedSourceRepoModel, List<FeedItemRepoModel>)>[];
 
     for (final doc in feedCollection.docs) {
       final personalFeed = PersonalFeedSourceModel.fromFirebaseDoc(doc);
 
+      final sourceDetails = FeedSourceDetails(
+          feedSourceId: personalFeed.id, enabled: personalFeed.enabled);
+
       // fetch every feed by url
-      feedSourcesAndItems.add(
-        await getFeedByUrl(
-          personalFeed.feedSourceUrl,
-          FeedType.personal,
-          userId,
-        ),
-      );
+      final (source, items) = await fetchFeedByUrl(personalFeed.feedSourceUrl);
+      feedSourcesAndItems.add((sourceDetails, source, items));
     }
     return feedSourcesAndItems;
   }
 
   @override
-  Future saveFeedItem(FeedItem item, String? userId) async {
-    // TODO: implement saveFeedItem
-    log("repo save feed item");
+  Future<FeedSourceDetails?> getFeedSourceDetails(
+      String userId, FeedSourceRepoModel source) async {
+    final doc = await firestore
+        .collection(usersCollection)
+        .doc(userId)
+        .collection(personalFeedsCollection)
+        .doc(source.id)
+        .get();
+    if (!doc.exists) return null;
+    final model = PersonalFeedSourceModel.fromFirebaseDoc(doc);
+    return FeedSourceDetails(feedSourceId: model.id, enabled: model.enabled);
+  }
 
-    final itemModel = FeedItemRepoModel.fromFeedItem(item);
+  @override
+  Future<FeedItemDetails?> getFeedItemDetails(
+    String userId,
+    FeedItemRepoModel repoModel,
+  ) async {
+    final doc = await firestore
+        .collection(usersCollection)
+        .doc(userId)
+        .collection(personalFeedItemsCollection)
+        .doc(repoModel.id)
+        .get();
+    if (!doc.exists) return null;
+
+    final model = PersonalFeedItemModel.fromFirebaseDoc(doc);
+    return FeedItemDetails(
+        feedItemId: model.feedItemId,
+        liked: model.liked,
+        bookmarked: model.bookmarked);
+  }
+
+  // TODO: remove feedType
+  // @override
+  // Future<(FeedSource, List<FeedItem>)> getFeedByUrl(
+  //     String url, FeedType feedType, String? userId) async {
+  //   log("getting feed by url $url");
+
+  //   // TODO: error handling
+
+  //   // 1. fetch source and items as models
+  //   final (feedSourceModel, feedItemModels) = await RssFetcher.fetch(url);
+
+  //   // 2. combine necessary stuff to make business objects, fetch likes and views, etc. for the current user
+  //   var sourceEnabled = true;
+
+  //   if (feedType == FeedType.personal && userId != null) {
+  //     // is this source saved for the user?
+  //     final personalFeedSource = await firestore
+  //         .collection(usersCollection)
+  //         .doc(userId)
+  //         .collection(personalFeedsCollection)
+  //         .doc(PersonalFeedSourceModel.generateId(url))
+  //         .get();
+
+  //     if (personalFeedSource.exists) {
+  //       sourceEnabled =
+  //           PersonalFeedSourceModel.fromFirebaseDoc(personalFeedSource).enabled;
+  //     }
+  //   }
+
+  //   final feedSource = feedSourceModel.toFeedSource(feedType, sourceEnabled);
+
+  //   final feedItems = await Future.wait(
+  //     feedItemModels.map((item) async {
+  //       // update views & likes if it's stored
+  //       final doc =
+  //           await firestore.collection(feedItemsCollection).doc(item.id).get();
+
+  //       var views = 0;
+  //       var likes = 0;
+  //       if (doc.data() != null) {
+  //         final itemModel = FeedItemRepoModel.fromFirebaseDoc(doc);
+  //         views = itemModel.views;
+  //         likes = itemModel.likes;
+  //       }
+  //       item.views = views;
+  //       item.likes = likes;
+
+  //       // bookmarked & liked ?
+  //       var bookmarked = false;
+  //       var liked = false;
+
+  //       if (userId != null) {
+  //         final userDoc = firestore.collection(usersCollection).doc(userId);
+  //         bookmarked = (await userDoc
+  //                 .collection(bookmarkedItemsCollection)
+  //                 .doc(item.id)
+  //                 .get())
+  //             .exists;
+
+  //         liked = (await userDoc
+  //                 .collection(likedItemsCollection)
+  //                 .doc(item.id)
+  //                 .get())
+  //             .exists;
+
+  //         log("bookmarked = $bookmarked;  liked = $liked;  url = ${item.articleUrl}");
+  //       }
+
+  //       return item.toFeedItem(liked, bookmarked);
+  //     }),
+  //   );
+
+  //   return (feedSource, feedItems);
+  // }
+
+  // @override
+  // Future<List<(FeedSource, List<FeedItem>)>> getPersonalFeeds(
+  //     String userId) async {
+  //   // get personal feeds
+  //   final feedCollection = await firestore
+  //       .collection(usersCollection)
+  //       .doc(userId)
+  //       .collection(personalFeedsCollection)
+  //       .get();
+
+  //   final feedSourcesAndItems = <(FeedSource, List<FeedItem>)>[];
+
+  //   for (final doc in feedCollection.docs) {
+  //     final personalFeed = PersonalFeedSourceModel.fromFirebaseDoc(doc);
+
+  //     // fetch every feed by url
+  //     feedSourcesAndItems.add(
+  //       await getFeedByUrl(
+  //         personalFeed.feedSourceUrl,
+  //         FeedType.personal,
+  //         userId,
+  //       ),
+  //     );
+  //   }
+  //   return feedSourcesAndItems;
+  //
+
+  @override
+  Future saveFeedItem(FeedItemRepoModel feedItem) async {
+    log("repo save feed item");
     await firestore
         .collection(feedItemsCollection)
-        .doc(itemModel.id)
-        .set(itemModel.toFirestoreDoc());
-
-    if (userId == null) return;
-
-    if (item.liked) {
-      await firestore
-          .collection(usersCollection)
-          .doc(userId)
-          .collection(likedItemsCollection)
-          .doc(item.id)
-          .set({});
-    } else {
-      await firestore
-          .collection(usersCollection)
-          .doc(userId)
-          .collection(likedItemsCollection)
-          .doc(item.id)
-          .delete();
-    }
-
-    if (item.bookmarked) {
-      await firestore
-          .collection(usersCollection)
-          .doc(userId)
-          .collection(bookmarkedItemsCollection)
-          .doc(item.id)
-          .set({});
-    } else {
-      await firestore
-          .collection(usersCollection)
-          .doc(userId)
-          .collection(bookmarkedItemsCollection)
-          .doc(item.id)
-          .delete();
-    }
+        .doc(feedItem.id)
+        .set(feedItem.toFirestoreDoc());
   }
+
+  @override
+  Future saveFeedItemDetails(String userId, FeedItemDetails itemDetails) async {
+    log("repo save feed item details");
+
+    final itemDoc = PersonalFeedItemModel(
+        feedItemId: itemDetails.feedItemId,
+        liked: itemDetails.liked,
+        bookmarked: itemDetails.bookmarked);
+
+    await firestore
+        .collection(usersCollection)
+        .doc(userId)
+        .collection(personalFeedItemsCollection)
+        .doc(itemDoc.feedItemId)
+        .set(itemDoc.toFirestoreDoc());
+  }
+
+  // @override
+  // Future saveFeedItem(FeedItem item, String? userId) async {
+  //   // TODO: implement saveFeedItem
+  //   log("repo save feed item");
+
+  //   final itemModel = FeedItemRepoModel.fromFeedItem(item);
+  //   await firestore
+  //       .collection(feedItemsCollection)
+  //       .doc(itemModel.id)
+  //       .set(itemModel.toFirestoreDoc());
+
+  //   if (userId == null) return;
+
+  //   if (item.liked) {
+  //     await firestore
+  //         .collection(usersCollection)
+  //         .doc(userId)
+  //         .collection(likedItemsCollection)
+  //         .doc(item.id)
+  //         .set({});
+  //   } else {
+  //     await firestore
+  //         .collection(usersCollection)
+  //         .doc(userId)
+  //         .collection(likedItemsCollection)
+  //         .doc(item.id)
+  //         .delete();
+  //   }
+
+  //   if (item.bookmarked) {
+  //     await firestore
+  //         .collection(usersCollection)
+  //         .doc(userId)
+  //         .collection(bookmarkedItemsCollection)
+  //         .doc(item.id)
+  //         .set({});
+  //   } else {
+  //     await firestore
+  //         .collection(usersCollection)
+  //         .doc(userId)
+  //         .collection(bookmarkedItemsCollection)
+  //         .doc(item.id)
+  //         .delete();
+  //   }
+  // }
 
   @override
   Future saveFeedSource(FeedSource source, String userId) async {
@@ -525,7 +651,6 @@ class FeedRepositoryImpl implements FeedRepository {
 // 2. fetch views + likes for all items from firebase (public collection, no auth required here)
 // 3. if user is logged in, check if any items are saved for the user
 // 4. present items of the feed
-
 
 // II. loading personal feeds flow
 
