@@ -18,9 +18,9 @@ class UserPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: ReadrssAppBar(
-        title: ScreenPage.account.title,
-        context: context,
+      appBar: AppBar(
+        title: Text(ScreenPage.account.title),
+        centerTitle: true,
       ),
       backgroundColor: colors(context).background,
       body: Padding(
@@ -37,7 +37,9 @@ class UserPage extends StatelessWidget {
                 onPressed: signOut,
                 child: const Text("Sign Out"),
               ),
-              const SizedBox(height: 20.0,),
+              const SizedBox(
+                height: 20.0,
+              ),
               TextButton(
                 style: TextButton.styleFrom(
                   backgroundColor: colors(context).error,
@@ -47,7 +49,8 @@ class UserPage extends StatelessWidget {
                   context: context,
                   builder: (dialogContext) => AlertDialog(
                     title: const Text("Delete Account"),
-                    content: const Text("Are you sure you want to delete your account?"),
+                    content: const Text(
+                        "Are you sure you want to delete your account?"),
                     actions: <Widget>[
                       TextButton(
                         child: const Text('Cancel'),
