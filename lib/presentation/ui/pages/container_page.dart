@@ -3,7 +3,6 @@ import 'package:flutter_readrss/di.dart';
 import 'package:flutter_readrss/presentation/presenter/feed_events.dart';
 import 'package:flutter_readrss/presentation/ui/pages/feed_page.dart';
 import 'package:flutter_readrss/presentation/ui/pages/settings_page.dart';
-import 'package:flutter_readrss/use_case/feeds/model/feed_item.dart';
 import 'package:provider/provider.dart';
 
 import '../const/screen_page.dart';
