@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_readrss/di.dart';
+import 'package:flutter_readrss/presentation/presenter/feed_events.dart';
 import 'package:flutter_readrss/presentation/ui/pages/feed_page.dart';
 import 'package:flutter_readrss/presentation/ui/pages/settings_page.dart';
+import 'package:flutter_readrss/use_case/feeds/model/feed_item.dart';
 import 'package:provider/provider.dart';
 
 import '../const/screen_page.dart';
@@ -33,7 +35,6 @@ class _ContainerPageState extends State<ContainerPage> {
     super.initState();
     // TODO: finish testing this -> should be 
     // initMainFeedWithMocks();
-    // feedUseCases.loadPredefinedFeedsByUrls(mainFeedRssUrls);
     feedUseCases.loadPredefinedFeeds();
     feedUseCases.loadPersonalFeeds();
     feedUseCases.loadBookmarkedFeedItems();
@@ -53,6 +54,7 @@ class _ContainerPageState extends State<ContainerPage> {
               toggleBookmark: feedUseCases.toggleBookmarkFeedItem,
               toggleLike: feedUseCases.toggleLikeFeedItem,
               increaseViewCount: feedUseCases.viewFeedItem,
+              isLoggedIn: () => authUseCases.getUser() != null,
             ),
             FeedPage(
               title: ScreenPage.personalFeed.title,
@@ -60,6 +62,7 @@ class _ContainerPageState extends State<ContainerPage> {
               toggleBookmark: feedUseCases.toggleBookmarkFeedItem,
               toggleLike: feedUseCases.toggleLikeFeedItem,
               increaseViewCount: feedUseCases.viewFeedItem,
+              isLoggedIn: () => authUseCases.getUser() != null,
             ),
             FeedPage(
               title: ScreenPage.bookmarks.title,
@@ -67,6 +70,8 @@ class _ContainerPageState extends State<ContainerPage> {
               toggleBookmark: feedUseCases.toggleBookmarkFeedItem,
               toggleLike: feedUseCases.toggleLikeFeedItem,
               increaseViewCount: feedUseCases.viewFeedItem,
+              isLoggedIn: () => authUseCases.getUser() != null,
+              initialData: const FeedItemsEvent(feedItems: []),
               noItemsText: "Your bookmarked feed items will appear here.",
             ),
             SettingsPage(

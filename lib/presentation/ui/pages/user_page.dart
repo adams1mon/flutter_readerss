@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_readrss/presentation/ui/const/screen_page.dart';
 
-import '../components/app_bar.dart';
 import '../styles/styles.dart';
 
 // TODO: refine this page a bit; maybe put account settings under normal settings??

@@ -2,6 +2,7 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_readrss/presentation/ui/components/avatars.dart';
+import 'package:flutter_readrss/presentation/ui/components/utils.dart';
 import 'package:flutter_readrss/use_case/feeds/model/feed_item.dart';
 import 'package:flutter_readrss/presentation/ui/styles/styles.dart';
 
@@ -14,12 +15,14 @@ class FeedCard extends StatefulWidget {
     required this.toggleBookmarked,
     required this.toggleLiked,
     required this.increaseViewCount,
+    required this.isLoggedIn,
   });
 
   final FeedItem feedItem;
   final void Function() toggleBookmarked;
   final void Function() toggleLiked;
   final void Function() increaseViewCount;
+  final bool Function() isLoggedIn;
 
   @override
   State<FeedCard> createState() => _FeedCardState();
@@ -33,12 +36,18 @@ class _FeedCardState extends State<FeedCard> {
   }
 
   void toggleBookmarked() {
+    if (!widget.isLoggedIn()) {
+      showAuthDialog(context, "You must be logged in to bookmark and item");
+    }
     setState(() {
       widget.toggleBookmarked();
     });
   }
 
   void toggleLiked() {
+    if (!widget.isLoggedIn()) {
+      showAuthDialog(context, "You must be logged in to like an item.");
+    }
     setState(() {
       widget.toggleLiked();
     });

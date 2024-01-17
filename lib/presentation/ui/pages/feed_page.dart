@@ -17,17 +17,21 @@ class FeedPage extends StatelessWidget {
     required this.toggleBookmark,
     required this.toggleLike,
     required this.increaseViewCount,
+    required this.isLoggedIn,
     this.noItemsText =
         "It seems like there are no feeds.\nTry to add some or enable them on the settings page!",
+    this.initialData,
   });
 
   final String title;
   final Stream<FeedItemsEvent> feedItemsStream;
   final String noItemsText;
+  final FeedItemsEvent? initialData;
 
   final void Function(FeedItem) toggleBookmark;
   final void Function(FeedItem) toggleLike;
   final void Function(FeedItem) increaseViewCount;
+  final bool Function() isLoggedIn;
 
   @override
   Widget build(BuildContext context) {
@@ -51,6 +55,8 @@ class FeedPage extends StatelessWidget {
           toggleBookmark: toggleBookmark,
           toggleLike: toggleLike,
           increaseViewCount: increaseViewCount,
+          isLoggedIn: isLoggedIn,
+          initialData: initialData,
         ),
       ),
     );
@@ -65,18 +71,23 @@ class FeedList extends StatelessWidget {
     required this.toggleBookmark,
     required this.toggleLike,
     required this.increaseViewCount,
+    required this.isLoggedIn,
+    this.initialData
   });
 
   final Stream<FeedItemsEvent> feedItemStream;
   final String noItemsText;
+  final FeedItemsEvent? initialData;
   final void Function(FeedItem) toggleBookmark;
   final void Function(FeedItem) toggleLike;
   final void Function(FeedItem) increaseViewCount;
+  final bool Function() isLoggedIn;
 
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<FeedItemsEvent>(
       stream: feedItemStream,
+      initialData: initialData,
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return const Text("An unknown error occurred.");
@@ -109,6 +120,7 @@ class FeedList extends StatelessWidget {
                   toggleBookmarked: () => toggleBookmark(items[index]),
                   toggleLiked: () => toggleLike(items[index]),
                   increaseViewCount: () => increaseViewCount(items[index]),
+                  isLoggedIn: isLoggedIn,
                 ),
               );
             },
