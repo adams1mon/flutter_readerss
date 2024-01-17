@@ -1,7 +1,7 @@
 
 import 'package:flutter_readrss/repository/firestore/model/feed_item_repo_model.dart';
 import 'package:flutter_readrss/repository/firestore/model/feed_source_repo_model.dart';
-import 'package:flutter_readrss/repository/network/feed_item_network_model.dart';
+import 'package:flutter_readrss/repository/network/model/feed_item_network_model.dart';
 import 'package:flutter_readrss/repository/network/model/feed_source_network_model.dart';
 
 class RepoFeedSourceMapper {

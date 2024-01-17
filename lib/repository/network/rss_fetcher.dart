@@ -1,5 +1,5 @@
 import 'dart:developer';
-import 'package:flutter_readrss/repository/network/feed_item_network_model.dart';
+import 'package:flutter_readrss/repository/network/model/feed_item_network_model.dart';
 import 'package:flutter_readrss/repository/network/model/feed_source_network_model.dart';
 import "package:http/http.dart" as http;
 import 'package:webfeed/domain/rss_feed.dart';
