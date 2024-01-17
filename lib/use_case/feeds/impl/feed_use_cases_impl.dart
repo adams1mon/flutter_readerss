@@ -1,5 +1,6 @@
 import 'dart:developer';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_readrss/repository/firestore/model/feed_item_repo_model.dart';
 import 'package:flutter_readrss/use_case/auth/auth_use_cases.dart';
 import 'package:flutter_readrss/use_case/exceptions/use_case_exception.dart';
@@ -15,7 +16,6 @@ import 'package:flutter_readrss/use_case/feeds/model/feed_source_details.dart';
 import 'package:flutter_readrss/use_case/feeds/model/feed_type.dart';
 
 // TODO: resolve 'scope leakage' between use case and repository layers (proper separation would help)
-// TODO: load bookmarked items when user is logged in
 
 class FeedUseCasesImpl implements FeedUseCases {
   FeedUseCasesImpl({
@@ -30,9 +30,7 @@ class FeedUseCasesImpl implements FeedUseCases {
   final FeedRepository _feedRepository;
   final AuthUseCases _authUseCases;
 
-  // TODO:
-  // I. loading predefined feeds flow
-
+  // loading predefined feeds flow
   // 1. fetch feed model + items from the network
   // 2. fetch views + likes for all items from firebase (public collection, no auth required here)
   // 3. if user is logged in, check if any items are saved for the user
@@ -56,29 +54,10 @@ class FeedUseCasesImpl implements FeedUseCases {
         );
 
         // 2. if the user is logged in, fetch personal item details (liked, bookmarked)
-        final feedItems = await Future.wait(
-          feedItemRepoModels.map((feedItemRepoModel) async {
-            var liked = false;
-            var bookmarked = false;
-
-            if (user != null) {
-              final feedItemDetails = await _feedRepository.getFeedItemDetails(
-                  user.uid, feedItemRepoModel);
-              if (feedItemDetails != null) {
-                liked = feedItemDetails.liked;
-                bookmarked = feedItemDetails.bookmarked;
-              }
-            }
-
-            // create a business object
-            return FeedItemMapper.fromRepoModel(
-                feedItemRepoModel, bookmarked, liked, FeedType.predefined);
-          }),
-        );
+        final feedItems = await _getFeedItemDetails(feedItemRepoModels, user, FeedType.predefined);
 
         _feedPresenter.setFeedSource(feedSource);
         _feedPresenter.setFeedItems(feedItems);
-        // _feedPresenter.setFeed(feedSource, feedItems);
       } catch (e) {
         log("error while fetching predefined feed from url $url", error: e);
         throw UseCaseException("Error while loading main feeds");
@@ -86,12 +65,12 @@ class FeedUseCasesImpl implements FeedUseCases {
     }
   }
 
-  // II. loading personal feeds flow
 
-  // 1. fetch feed model + items from the network
-  // 2. fetch views + likes for all items from firebase (public collection, no auth required)
-  // 3. [user should be logged in] fetch liked + bookmarked status for all items from firebase
-  // 4. [user should be logged in] fetch enabled status for feed sources from firebase
+  // loading personal feeds flow
+  // 1. fetch user's feeds
+  // 2. for every feed, if a feed is enabled, fetch its feed items from the network
+  // 3. fetch views + likes for all items from firebase (public collection, no auth required)
+  // 4. fetch liked + bookmarked status
   // 5. present personal feed and its items
 
   @override
@@ -106,44 +85,35 @@ class FeedUseCasesImpl implements FeedUseCases {
 
     try {
       // 1. fetch personal feeds and details (feed enabled), their items + their views and likes
-      final personalFeeds = await _feedRepository.fetchPersonalFeeds(user.uid);
+      final personalFeeds = await _feedRepository.getPersonalFeeds(user.uid);
 
-      for (final (feedSourceDetails, feedSourceRepoModel, feedItemRepoModels)
-          in personalFeeds) {
+      for (final feedSourceDetails in personalFeeds) {
+
+        // TODO: only fetch feed and its items if it's enabled - currently only the FeedSourceDetails are stored, and a FeedSource can't be constructed so it must be fetched
+        final (feedSourceRepoModel, feedItemRepoModels) =
+            await _feedRepository
+                .fetchFeedByUrl(feedSourceDetails.feedSourceUrl);
+
         final feedSource = FeedSourceMapper.fromRepoModel(
           feedSourceRepoModel,
           feedSourceDetails.enabled,
           FeedType.personal,
         );
-
-        // 2. fetch personal feed item details
-        final feedItems = await Future.wait(
-          feedItemRepoModels.map((feedItemRepoModel) async {
-            final feedItemDetails = await _feedRepository.getFeedItemDetails(
-                user.uid, feedItemRepoModel);
-
-            // create a business object
-            return FeedItemMapper.fromRepoModel(
-              feedItemRepoModel,
-              feedItemDetails?.bookmarked ?? false,
-              feedItemDetails?.liked ?? false,
-              FeedType.personal,
-            );
-          }),
-        );
+        log("setting personal feed source ${feedSource.rssUrl}");
 
         _feedPresenter.setFeedSource(feedSource);
-        _feedPresenter.setFeedItems(feedItems);
-        // _feedPresenter.setFeed(feedSource, feedItems);
+
+        // 2. fetch personal item details (liked, bookmarked)
+        if (feedSource.enabled) {
+          final feedItems = await _getFeedItemDetails(feedItemRepoModels, user, FeedType.personal);
+          _feedPresenter.setFeedItems(feedItems);
+        }
       }
     } catch (e) {
       log("error while fetching personal feeds");
       throw UseCaseException("Error while loading personal feeds");
     }
   }
-
-  // III. loading bookmarked feed items flow
-  // 1. if the user is logged in, fetch every feed item
 
   @override
   Future<void> loadBookmarkedFeedItems() async {
@@ -190,24 +160,10 @@ class FeedUseCasesImpl implements FeedUseCases {
       );
 
       // 2. fetch personal item details (liked, bookmarked)
-      final feedItems = await Future.wait(
-        feedItemRepoModels.map((feedItemRepoModel) async {
-          final feedItemDetails = await _feedRepository.getFeedItemDetails(
-              user.uid, feedItemRepoModel);
-
-          // create a business object
-          return FeedItemMapper.fromRepoModel(
-            feedItemRepoModel,
-            feedItemDetails?.bookmarked ?? false,
-            feedItemDetails?.liked ?? false,
-            FeedType.personal,
-          );
-        }),
-      );
-
+      final feedItems = await _getFeedItemDetails(feedItemRepoModels, user, FeedType.personal);
+     
       _feedPresenter.setFeedSource(feedSource);
       _feedPresenter.setFeedItems(feedItems);
-      // _feedPresenter.setFeed(feedSource, feedItems);
     } catch (e) {
       log("error while adding personal feed from url $url");
       throw UseCaseException("Error while adding personal feed");
@@ -234,7 +190,6 @@ class FeedUseCasesImpl implements FeedUseCases {
 
       if (!source.enabled) {
         _feedPresenter.deleteFeedItemsForSource(source);
-        // _feedPresenter.removeFeedItemsForSource(source);
       } else {
         final (feedSourceRepoModel, feedItemRepoModels) =
             await _feedRepository.fetchFeedByUrl(source.rssUrl);
@@ -246,28 +201,43 @@ class FeedUseCasesImpl implements FeedUseCases {
         );
 
         // 2. fetch personal item details (liked, bookmarked)
-        final feedItems = await Future.wait(
-          feedItemRepoModels.map((feedItemRepoModel) async {
-            final feedItemDetails = await _feedRepository.getFeedItemDetails(
-                user.uid, feedItemRepoModel);
-
-            // create a business object
-            return FeedItemMapper.fromRepoModel(
-                feedItemRepoModel,
-                feedItemDetails?.bookmarked ?? false,
-                feedItemDetails?.liked ?? false,
-                FeedType.personal);
-          }),
-        );
+        final feedItems = await _getFeedItemDetails(feedItemRepoModels, user, source.type);
 
         _feedPresenter.setFeedSource(feedSource);
         _feedPresenter.setFeedItems(feedItems);
-        // _feedPresenter.setFeed(feedSource, feedItems);
       }
     } catch (e) {
       log("an error occurred while toggleing feed source $source", error: e);
       throw UseCaseException("Error while toggleing feed source");
     }
+  }
+
+  // add user's details (liked, bookmarked) to a list of feed items
+  Future<List<FeedItem>> _getFeedItemDetails(
+      List<FeedItemRepoModel> itemRepoModels, User? user, FeedType feedItemType) async {
+    final itemList = <FeedItem>[];
+
+    for (final repoModel in itemRepoModels) {
+      var liked = false;
+      var bookmarked = false;
+
+      try {
+        if (user != null) {
+          final feedItemDetails =
+              await _feedRepository.getFeedItemDetails(user.uid, repoModel);
+          if (feedItemDetails != null) {
+            liked = feedItemDetails.liked;
+            bookmarked = feedItemDetails.bookmarked;
+          }
+        }
+
+        itemList.add(FeedItemMapper.fromRepoModel(
+            repoModel, bookmarked, liked, feedItemType));
+      } catch (e) {
+        log("error while fetching user's feed item details for ${repoModel.articleUrl}");
+      }
+    }
+    return itemList;
   }
 
   @override
@@ -285,11 +255,8 @@ class FeedUseCasesImpl implements FeedUseCases {
       );
       await _feedRepository.deleteFeedSourceDetails(
           user.uid, feedSourceDetails);
-      // _feedPresenter.setFeed(source, []);
       _feedPresenter.deleteFeedItemsForSource(source);
       _feedPresenter.deleteFeedSource(source);
-      // _feedPresenter.removeFeedSource(source);
-      // _feedPresenter.removeFeedSource(source);
     } catch (e) {
       log("an error occurred while deleting feed source $source", error: e);
       throw UseCaseException("Error while deleting feed source");

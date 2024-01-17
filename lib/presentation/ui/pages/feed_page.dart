@@ -17,7 +17,8 @@ class FeedPage extends StatelessWidget {
     required this.toggleBookmark,
     required this.toggleLike,
     required this.increaseViewCount,
-    this.noItemsText = "It seems like there are no feeds.\nTry to add some or enable them on the settings page!",
+    this.noItemsText =
+        "It seems like there are no feeds.\nTry to add some or enable them on the settings page!",
   });
 
   final String title;
@@ -79,7 +80,21 @@ class FeedList extends StatelessWidget {
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return const Text("An unknown error occurred.");
-        } else if (!snapshot.hasData || snapshot.data!.feedItems.isEmpty) {
+        } else if (!snapshot.hasData) {
+          return const Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                "Loading...",
+                style: TextStyle(),
+              ),
+              SizedBox(
+                height: 25,
+              ),
+              CircularProgressIndicator(),
+            ],
+          );
+        } else if (snapshot.data!.feedItems.isEmpty) {
           return HelpText(text: noItemsText);
         } else {
           final items = snapshot.data!.feedItems;

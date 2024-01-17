@@ -89,6 +89,26 @@ class FeedRepositoryImpl implements FeedRepository {
       }),
     );
   }
+  
+  @override
+  Future<List<FeedSourceDetails>> getPersonalFeeds(String userId) async {
+    // get personal feeds
+    final feedCollection = await firestore
+        .collection(usersCollection)
+        .doc(userId)
+        .collection(personalFeedsCollection)
+        .get();
+
+    return feedCollection.docs.map((doc) {
+        final personalFeed = PersonalFeedSourceModel.fromFirebaseDoc(doc);
+
+        final sourceDetails = FeedSourceDetails(
+            feedSourceUrl: personalFeed.feedSourceUrl,
+            enabled: personalFeed.enabled);
+
+        return sourceDetails;
+      }).toList();
+  }
 
   @override
   Future<List<(FeedItemDetails, FeedItemRepoModel)>> fetchBookmarkedFeedItems(

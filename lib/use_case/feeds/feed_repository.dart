@@ -7,6 +7,9 @@ import 'package:flutter_readrss/use_case/feeds/model/feed_source_details.dart';
 abstract class FeedRepository {
   // TODO: break dependency on repo layer because of *RepoModel classes
   Future<(FeedSourceRepoModel, List<FeedItemRepoModel>)> fetchFeedByUrl(String url);
+
+  Future<List<FeedSourceDetails>> getPersonalFeeds(String userId);
+
   Future<List<(FeedSourceDetails, FeedSourceRepoModel, List<FeedItemRepoModel>)>> fetchPersonalFeeds(String userId);
 
   Future<FeedSourceDetails?> getFeedSourceDetails(String userId, FeedSourceRepoModel feedSourceRepoModel);
