@@ -2,7 +2,7 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_readrss/presentation/ui/components/avatars.dart';
-import 'package:flutter_readrss/use_case/model/feed_item.dart';
+import 'package:flutter_readrss/use_case/feeds/model/feed_item.dart';
 import 'package:flutter_readrss/presentation/ui/styles/styles.dart';
 
 import '../const/screen_route.dart';

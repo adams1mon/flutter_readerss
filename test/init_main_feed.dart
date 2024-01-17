@@ -1,9 +1,9 @@
 import 'dart:developer';
 
-import 'package:flutter_readrss/use_case/const/main_rss_feeds.dart';
-import 'package:flutter_readrss/data/rss_fetcher.dart';
-import 'package:flutter_readrss/use_case/model/feed_item.dart';
-import 'package:flutter_readrss/use_case/model/feed_source.dart';
+import 'package:flutter_readrss/use_case/feeds/main_rss_feeds.dart';
+import 'package:flutter_readrss/repository/network/rss_fetcher.dart';
+import 'package:flutter_readrss/use_case/feeds/model/feed_item.dart';
+import 'package:flutter_readrss/use_case/feeds/model/feed_source.dart';
 import 'package:flutter_readrss/use_case/model/feed_source_type.dart';
 
 // void initMainFeed() async {

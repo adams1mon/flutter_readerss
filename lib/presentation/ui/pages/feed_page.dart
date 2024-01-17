@@ -6,7 +6,7 @@ import 'package:flutter_readrss/presentation/ui/components/feed_card.dart';
 import 'package:flutter_readrss/presentation/ui/components/help_text.dart';
 import 'package:flutter_readrss/presentation/ui/pages/container_page.dart';
 import 'package:flutter_readrss/presentation/ui/styles/styles.dart';
-import 'package:flutter_readrss/use_case/model/feed_item.dart';
+import 'package:flutter_readrss/use_case/feeds/model/feed_item.dart';
 import 'package:provider/provider.dart';
 
 class FeedPage extends StatelessWidget {

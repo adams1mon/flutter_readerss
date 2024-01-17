@@ -3,9 +3,10 @@ import 'dart:async';
 import 'dart:developer';
 
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_readrss/use_case/auth/user_repository.dart';
 
 import '../auth_use_cases.dart';
-import '../exceptions/use_case_exceptions.dart';
+import '../../exceptions/use_case_exception.dart';
 
 /// Class which implements [AuthUseCases] using Firebase Auth,
 /// wraps the Firebase auth state change events with our specific [AuthEvent] events,
@@ -14,8 +15,9 @@ class AuthUseCasesImpl implements AuthUseCases {
 
   User? _user;
   final _authEvents = StreamController<AuthEvent>.broadcast();
+  final UserRepository _userRepository;
 
-  AuthUseCasesImpl() {
+  AuthUseCasesImpl({required userRepository}) : _userRepository = userRepository {
     FirebaseAuth.instance.authStateChanges()
     .listen((User? user) {
       _user = user;
@@ -106,6 +108,8 @@ class AuthUseCasesImpl implements AuthUseCases {
   @override
   Future<void> deleteUser() async {
     if (_user == null) return;
+    
+    await _userRepository.deleteUser(_user!.uid);
     await _user?.delete();
     _user = null;
     _authEvents.add(AuthEvent(type: AuthEventType.delete, user: _user));

@@ -1,33 +1,33 @@
-import 'package:flutter_readrss/data/feed_repository_impl.dart';
+import 'package:flutter_readrss/repository/firestore/impl/feed_repository_impl.dart';
+import 'package:flutter_readrss/repository/firestore/impl/user_repository_impl.dart';
 import 'package:flutter_readrss/presentation/presenter/impl/bookmark_feed_provider.dart';
 import 'package:flutter_readrss/presentation/presenter/impl/feed_connector.dart';
 import 'package:flutter_readrss/presentation/presenter/impl/feed_presenter_impl.dart';
-import 'package:flutter_readrss/use_case/impl/auth_use_cases_impl.dart';
-import 'package:flutter_readrss/use_case/impl/feed_use_cases_impl.dart';
+import 'package:flutter_readrss/use_case/auth/impl/auth_use_cases_impl.dart';
+import 'package:flutter_readrss/use_case/feeds/impl/feed_use_cases_impl.dart';
 
 // manual dependency injection here :)
 
-final repository = FeedRepositoryImpl();
+final feedRepository = FeedRepositoryImpl();
+final userReopsitory = UserRepositoryImpl();
 
 final mainFeedConnector = FeedConnector();
 final personalFeedConnector = FeedConnector();
-final bookmarksFeedConnector = FeedConnector();
+final bookmarksFeedItemsConnector = BookmarkFeedItemsConnector();
 
-// final bookmarksFeedConnector = BookmarkFeedProviderImpl(
-//   feedProviders: [mainFeedConnector, personalFeedConnector],
-// );
 
 final presenter = FeedPresenterImpl(
-  mainFeedSink: mainFeedConnector,
-  personalFeedSink: personalFeedConnector,
-  bookmarkFeedSink: bookmarksFeedConnector,
+  mainFeedItemsSink: mainFeedConnector,
+  personalFeedSourceSink: personalFeedConnector,
+  personalFeedItemsSink: personalFeedConnector,
+  bookmarkFeedItemsSink: bookmarksFeedItemsConnector,
 );
 
-final authUseCases = AuthUseCasesImpl();
+final authUseCases = AuthUseCasesImpl(userRepository: userReopsitory);
 
 final feedUseCases = FeedUseCasesImpl(
   feedPresenter: presenter,
-  feedRepository: repository,
+  feedRepository: feedRepository,
   authUseCases: authUseCases,
 );
 
@@ -35,5 +35,5 @@ final feedUseCases = FeedUseCasesImpl(
 void globalCleanup() {
   mainFeedConnector.dispose();
   personalFeedConnector.dispose();
-  bookmarksFeedConnector.dispose();
+  bookmarksFeedItemsConnector.dispose();
 }

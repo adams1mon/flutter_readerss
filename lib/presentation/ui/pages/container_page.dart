@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_readrss/di.dart';
 import 'package:flutter_readrss/presentation/ui/pages/feed_page.dart';
 import 'package:flutter_readrss/presentation/ui/pages/settings_page.dart';
-import 'package:flutter_readrss/use_case/const/main_rss_feeds.dart';
 import 'package:provider/provider.dart';
 
 import '../const/screen_page.dart';
@@ -37,6 +36,7 @@ class _ContainerPageState extends State<ContainerPage> {
     // feedUseCases.loadPredefinedFeedsByUrls(mainFeedRssUrls);
     feedUseCases.loadPredefinedFeeds();
     feedUseCases.loadPersonalFeeds();
+    feedUseCases.loadBookmarkedFeedItems();
   }
 
   @override
@@ -63,7 +63,7 @@ class _ContainerPageState extends State<ContainerPage> {
             ),
             FeedPage(
               title: ScreenPage.bookmarks.title,
-              feedItemsStream: bookmarksFeedConnector.getFeedItemsStream(),
+              feedItemsStream: bookmarksFeedItemsConnector.getFeedItemsStream(),
               toggleBookmark: feedUseCases.toggleBookmarkFeedItem,
               toggleLike: feedUseCases.toggleLikeFeedItem,
               increaseViewCount: feedUseCases.viewFeedItem,

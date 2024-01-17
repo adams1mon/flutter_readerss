@@ -5,8 +5,8 @@ import 'package:flutter_readrss/presentation/presenter/feed_events.dart';
 import 'package:flutter_readrss/presentation/ui/components/app_bar.dart';
 import 'package:flutter_readrss/presentation/ui/components/avatars.dart';
 import 'package:flutter_readrss/presentation/ui/components/help_text.dart';
-import 'package:flutter_readrss/use_case/exceptions/use_case_exceptions.dart';
-import 'package:flutter_readrss/use_case/model/feed_source.dart';
+import 'package:flutter_readrss/use_case/exceptions/use_case_exception.dart';
+import 'package:flutter_readrss/use_case/feeds/model/feed_source.dart';
 import 'package:flutter_readrss/presentation/ui/styles/styles.dart';
 import 'package:provider/provider.dart';
 

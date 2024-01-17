@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 
 import '../../../di.dart';
-import '../../../use_case/auth_use_cases.dart';
+import '../../../use_case/auth/auth_use_cases.dart';
 import 'container_page.dart';
 import 'login_page.dart';
 

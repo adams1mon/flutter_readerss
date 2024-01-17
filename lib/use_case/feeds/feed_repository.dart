@@ -1,24 +1,11 @@
 
-import 'package:flutter_readrss/data/feed_repository_impl.dart';
-import 'package:flutter_readrss/use_case/impl/feed_use_cases_impl.dart';
-import 'package:flutter_readrss/use_case/model/feed_item.dart';
-import 'package:flutter_readrss/use_case/model/feed_source.dart';
+import 'package:flutter_readrss/repository/firestore/model/feed_item_repo_model.dart';
+import 'package:flutter_readrss/repository/firestore/model/feed_source_repo_model.dart';
+import 'package:flutter_readrss/use_case/feeds/model/feed_item_details.dart';
+import 'package:flutter_readrss/use_case/feeds/model/feed_source_details.dart';
 
 abstract class FeedRepository {
-  // Future<(FeedSource, List<FeedItem>)> getFeedByUrl(
-  //     String url, 
-  //     FeedType feedType,
-  //     // TODO: doesn't this leak scope outside of the use case layer??
-  //     String? userId,
-  // );
-
-  // Future<List<(FeedSource, List<FeedItem>)>> getPersonalFeeds(String userId);
-  
-  // Future saveFeedSource(FeedSource source, String userId);
-  // Future deleteFeedSource(FeedSource source, String userId);
-  // Future saveFeedItem(FeedItem item, String? userId);
-  // Future deleteFeedItem(FeedItem item, String userId);
-
+  // TODO: break dependency on repo layer because of *RepoModel classes
   Future<(FeedSourceRepoModel, List<FeedItemRepoModel>)> fetchFeedByUrl(String url);
   Future<List<(FeedSourceDetails, FeedSourceRepoModel, List<FeedItemRepoModel>)>> fetchPersonalFeeds(String userId);
 
@@ -27,7 +14,6 @@ abstract class FeedRepository {
 
   Future<List<(FeedItemDetails, FeedItemRepoModel)>> fetchBookmarkedFeedItems(String userId);
 
-  // Future saveFeedSource(FeedSourceRepoModel feedSource);
   Future saveFeedSourceDetails(String userId, FeedSourceDetails feedSourceDetails);
   Future deleteFeedSourceDetails(String userId, FeedSourceDetails feedSourceDetails);
 

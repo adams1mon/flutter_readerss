@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_readrss/presentation/ui/styles/styles.dart';
-import 'package:flutter_readrss/use_case/exceptions/use_case_exceptions.dart';
+import 'package:flutter_readrss/use_case/exceptions/use_case_exception.dart';
 
 class LoginPage extends StatelessWidget {
   const LoginPage({

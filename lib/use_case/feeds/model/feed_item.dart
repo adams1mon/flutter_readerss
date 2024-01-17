@@ -1,5 +1,6 @@
 
-// for the feed pages
+import 'package:flutter_readrss/use_case/feeds/model/feed_type.dart';
+
 class FeedItem {
   final String id; 
   final String feedSourceTitle;
@@ -16,6 +17,8 @@ class FeedItem {
   int views;
   int likes;
 
+  final FeedType type;
+
   FeedItem({
     required this.id,
     required this.feedSourceTitle,
@@ -29,6 +32,7 @@ class FeedItem {
     required this.likes,
     required this.bookmarked,
     required this.liked, 
+    required this.type,
   });
 
   String getDate() {

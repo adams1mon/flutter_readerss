@@ -1,14 +1,14 @@
 import 'package:flutter_readrss/use_case/feeds/model/feed_item.dart';
 import 'package:flutter_readrss/use_case/feeds/model/feed_source.dart';
 
-// called by the presenter
-abstract class FeedSourceSink {
-  void setFeedSource(FeedSource feedSource);
-  void removeFeedSource(FeedSource feedSource);
-}
+abstract class FeedPresenter {
 
-abstract class FeedItemsSink {
+  void setFeedSource(FeedSource feedSource);
+  void deleteFeedSource(FeedSource feedSource);
+
   void setFeedItems(List<FeedItem> feedItems);
-  void removeFeedItemsForSource(String rssUrl);
-  void updateFeedItem(FeedItem feeditem);
+  void updateFeedItem(FeedItem feedItem);
+  void deleteFeedItemsForSource(FeedSource feedSource);
+
+  void setBookmarkedFeedItems(List<FeedItem> feedItems);
 }
