@@ -1,8 +1,8 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_readrss/presentation/ui/styles/styles.dart';
 
-// for the feed pages
+import 'package:flutter_readrss/use_case/feeds/model/feed_type.dart';
+
 class FeedItem {
+  final String id; 
   final String feedSourceTitle;
   final String feedSourceRssUrl; // this is like a foreign key
   final String title;
@@ -10,27 +10,30 @@ class FeedItem {
   bool liked;
   final String? description;
   final String articleUrl;
-
-  final Image sourceIcon;
+  final String? sourceIconUrl;
 
   final DateTime? pubDate;
 
-  final int views;
-  final int likes;
+  int views;
+  int likes;
+
+  final FeedType type;
 
   FeedItem({
+    required this.id,
     required this.feedSourceTitle,
     required this.feedSourceRssUrl,
     required this.title,
-    this.bookmarked = false, 
-    this.liked = false, 
-    this.description,
+    required this.description,
     required this.articleUrl,
-    Image? sourceIcon,
-    this.pubDate,
+    required this.sourceIconUrl,
+    required this.pubDate,
     required this.views,
     required this.likes,
-  }) : sourceIcon = sourceIcon ?? defaultFeedImage;
+    required this.bookmarked,
+    required this.liked, 
+    required this.type,
+  });
 
   String getDate() {
     return "${pubDate!.year}/${pubDate!.month}/${pubDate!.day}";

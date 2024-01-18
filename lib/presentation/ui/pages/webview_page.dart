@@ -1,7 +1,6 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_readrss/presentation/ui/components/app_bar.dart';
 import 'package:flutter_readrss/presentation/ui/styles/styles.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
@@ -65,7 +64,6 @@ class _ArticleWebViewPageState extends State<ArticleWebViewPage> {
 
     return SafeArea(
       child: Scaffold(
-        appBar: ReadrssAppBar(title: "", context: context),
         backgroundColor: colors(context).background,
         body: FutureBuilder(
           future: _openUriInWebView(uri),

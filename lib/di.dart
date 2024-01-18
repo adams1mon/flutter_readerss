@@ -1,25 +1,40 @@
-import 'package:flutter_readrss/data/feed_repository.dart';
-import 'package:flutter_readrss/presentation/presenter/impl/bookmark_feed_provider.dart';
+import 'package:flutter_readrss/repository/firestore/impl/feed_repository_impl.dart';
+import 'package:flutter_readrss/repository/firestore/impl/user_repository_impl.dart';
+import 'package:flutter_readrss/presentation/presenter/impl/bookmark_feed_connector.dart';
 import 'package:flutter_readrss/presentation/presenter/impl/feed_connector.dart';
 import 'package:flutter_readrss/presentation/presenter/impl/feed_presenter_impl.dart';
-import 'package:flutter_readrss/use_case/impl/feed_use_cases_impl.dart';
+import 'package:flutter_readrss/use_case/auth/impl/auth_use_cases_impl.dart';
+import 'package:flutter_readrss/use_case/feeds/impl/feed_use_cases_impl.dart';
 
 // manual dependency injection here :)
 
-final repository = FeedRepositoryImpl();
+final feedRepository = FeedRepositoryImpl();
+final userReopsitory = UserRepositoryImpl();
 
 final mainFeedConnector = FeedConnector();
 final personalFeedConnector = FeedConnector();
-final bookmarksFeedConnector = BookmarkFeedProviderImpl(
-  feedProviders: [mainFeedConnector, personalFeedConnector],
-);
+final bookmarksFeedItemsConnector = BookmarkFeedItemsConnector();
 
 final presenter = FeedPresenterImpl(
-  mainFeedSink: mainFeedConnector,
-  personalFeedSink: personalFeedConnector,
+  mainFeedItemsSink: mainFeedConnector,
+  personalFeedSourceSink: personalFeedConnector,
+  personalFeedItemsSink: personalFeedConnector,
+  bookmarkFeedItemsSink: bookmarksFeedItemsConnector,
 );
 
-final useCases = FeedUseCasesImpl(
+final authUseCases = AuthUseCasesImpl(
+  userRepository: userReopsitory,
   feedPresenter: presenter,
-  feedRepository: repository,
 );
+
+final feedUseCases = FeedUseCasesImpl(
+  feedPresenter: presenter,
+  feedRepository: feedRepository,
+  authUseCases: authUseCases,
+);
+
+void globalCleanup() {
+  mainFeedConnector.dispose();
+  personalFeedConnector.dispose();
+  bookmarksFeedItemsConnector.dispose();
+}

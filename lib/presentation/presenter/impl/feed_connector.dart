@@ -1,17 +1,22 @@
-
 import 'dart:async';
 import 'dart:developer';
 
 import 'package:flutter_readrss/presentation/presenter/feed_events.dart';
 import 'package:flutter_readrss/presentation/presenter/feed_provider.dart';
 import 'package:flutter_readrss/presentation/presenter/feed_sink.dart';
-import 'package:flutter_readrss/use_case/model/feed_item.dart';
-import 'package:flutter_readrss/use_case/model/feed_source.dart';
+import 'package:flutter_readrss/use_case/feeds/model/feed_item.dart';
+import 'package:flutter_readrss/use_case/feeds/model/feed_source.dart';
 
 // presenter uses it to push feeds into it,
 // ui components subscribe to the provided feeds
 
-class FeedConnector implements FeedProvider, FeedSink {
+// class FeedConnector implements FeedProvider, FeedSink {
+class FeedConnector
+    implements
+        FeedSourceProvider,
+        FeedItemsProvider,
+        FeedSourceSink,
+        FeedItemsSink {
   final _feedSources = <String, FeedSource>{};
   final _feedItems = <String, Map<String, FeedItem>>{};
 
@@ -40,7 +45,16 @@ class FeedConnector implements FeedProvider, FeedSink {
     _feedSources[source.rssUrl] = source;
     _publishFeedSources(_feedSources);
   }
-  
+
+  @override
+  void setFeedSources(List<FeedSource> sources) {
+    log("FeedProvider: adding feed sources");
+    for (final source in sources) {
+      _feedSources[source.rssUrl] = source;
+    }
+    _publishFeedSources(_feedSources);
+  }
+
   @override
   void removeFeedSource(FeedSource source) {
     log("FeedProvider: removing feed source ${source.title}");
@@ -49,18 +63,38 @@ class FeedConnector implements FeedProvider, FeedSink {
   }
 
   @override
-  void setFeedItems(String rssUrl, List<FeedItem> feedItems) {
-    if (feedItems.isEmpty) {
-      log("FeedProvider: adding EMPTY items for source $rssUrl");
-      _feedItems.remove(rssUrl);
-    } else {
-      log("FeedProvider: adding items for source $rssUrl");
-      _feedItems[rssUrl] = Map.fromEntries(
-        feedItems.map(
-          (e) => MapEntry<String, FeedItem>(e.articleUrl, e),
-        ),
-      );
+  void removeFeedSources() {
+    log("FeedProvider: removing all feed sources");
+    _feedSources.clear();
+    _publishFeedSources(_feedSources);
+  }
+
+  @override
+  void setFeedItems(List<FeedItem> feedItems) {
+    for (final item in feedItems) {
+      if (!_feedItems.containsKey(item.feedSourceRssUrl)) {
+        log("FeedConnector: adding items: creating new map for ${item.feedSourceRssUrl}");
+        _feedItems[item.feedSourceRssUrl] = <String, FeedItem>{
+          item.articleUrl: item
+        };
+      } else {
+        log("FeedConnector: adding item ${item.feedSourceRssUrl} : ${item.articleUrl}");
+        _feedItems[item.feedSourceRssUrl]?[item.articleUrl] = item;
+      }
     }
+    _publishFeedItems(_feedItems);
+  }
+
+  @override
+  void removeFeedItemsForSource(String rssUrl) {
+    log("FeedConnector: removing feed items for source $rssUrl");
+    _feedItems.remove(rssUrl);
+    _publishFeedItems(_feedItems);
+  }
+
+  @override
+  void removeFeedItems() {
+    _feedItems.clear();
     _publishFeedItems(_feedItems);
   }
 
@@ -81,8 +115,10 @@ class FeedConnector implements FeedProvider, FeedSink {
   }
 
   void _publishFeedSources(Map<String, FeedSource> sources) {
-    _sourcesController.sink.add(
-        FeedSourcesEvent(feedSources: sources.values.toList(growable: false)));
+    // sort by title in abc order
+    _sourcesController.sink.add(FeedSourcesEvent(
+        feedSources: sources.values.toList(growable: false)
+          ..sort((a, b) => a.title.compareTo(b.title))));
   }
 
   void _publishFeedItems(Map<String, Map<String, FeedItem>> items) {
@@ -90,7 +126,7 @@ class FeedConnector implements FeedProvider, FeedSink {
         feedItems: items.values
             .expand((mapEntry) => mapEntry.values)
             .toList(growable: false)
-            ..sort(((a, b) => _comparePubDates(a, b)))));
+          ..sort(((a, b) => _comparePubDates(a, b)))));
   }
 
   int _comparePubDates(FeedItem a, FeedItem b) {

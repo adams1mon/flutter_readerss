@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_readrss/di.dart';
 import 'package:flutter_readrss/presentation/ui/components/avatars.dart';
+import 'package:flutter_readrss/presentation/ui/components/utils.dart';
 
 import '../const/screen_route.dart';
-
-
-// TODO: get this state from somewhere
-const loggedIn = false;
 
 class ReadrssAppBar extends AppBar {
   ReadrssAppBar(
@@ -16,21 +14,22 @@ class ReadrssAppBar extends AppBar {
           actions: [
             Padding(
               padding: const EdgeInsets.only(right: 8.0),
-              child: loggedIn
+              child: authUseCases.getUser() != null 
                   ? GestureDetector(
-                      onTap: () => Navigator.pushReplacementNamed(
-                            context,
-                            ScreenRoute.user.route,
-                          ),
-                      child:
-                          UserAvatar(image: Image.asset("assets/avatar.jpg")))
-                  : TextButton(
-                      // TODO: take me to the login page ?
-                      onPressed: () => Navigator.pushReplacementNamed(
+                      onTap: () => Navigator.pushNamed(
                         context,
-                        ScreenRoute.login.route,
+                        ScreenRoute.user.route,
                       ),
-                      child: const Text("Register"),
+                      child: UserAvatar(
+                        imageUrl: authUseCases.getUser()?.photoURL,
+                      ),
+                    )
+                  : TextButton(
+                      onPressed: () {
+                        // go to the initial page
+                        navigateToNewRoot(context, ScreenRoute.main);
+                      },
+                      child: const Text("Sign In"),
                     ),
             ),
           ],

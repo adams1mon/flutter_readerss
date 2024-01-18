@@ -5,8 +5,10 @@ import 'package:flutter_readrss/presentation/presenter/feed_events.dart';
 import 'package:flutter_readrss/presentation/ui/components/app_bar.dart';
 import 'package:flutter_readrss/presentation/ui/components/avatars.dart';
 import 'package:flutter_readrss/presentation/ui/components/help_text.dart';
-import 'package:flutter_readrss/use_case/exceptions/use_case_exceptions.dart';
-import 'package:flutter_readrss/use_case/model/feed_source.dart';
+import 'package:flutter_readrss/presentation/ui/components/loading_indicator.dart';
+import 'package:flutter_readrss/presentation/ui/components/utils.dart';
+import 'package:flutter_readrss/use_case/exceptions/use_case_exception.dart';
+import 'package:flutter_readrss/use_case/feeds/model/feed_source.dart';
 import 'package:flutter_readrss/presentation/ui/styles/styles.dart';
 import 'package:provider/provider.dart';
 
@@ -17,33 +19,32 @@ import 'container_page.dart';
 class SettingsPage extends StatelessWidget {
   const SettingsPage({
     super.key,
-    // required this.mainFeedBloc,
-    // required this.personalFeedBloc,
     required this.feedSourcesStream,
     required this.loadFeedByUrl,
     required this.deleteFeedSource,
     required this.toggleFeedSource,
+    required this.isLoggedIn,
   });
 
-  // final FeedSourcesBloc mainFeedBloc;
-  // final FeedSourcesBloc personalFeedBloc;
-
   final Stream<FeedSourcesEvent> feedSourcesStream;
-  // final PersonalFeedUseCases personalFeedUseCases;
 
   final Future<void> Function(String) loadFeedByUrl;
   final Future<void> Function(FeedSource) deleteFeedSource;
   final Future<void> Function(FeedSource) toggleFeedSource;
+  final bool Function() isLoggedIn;
 
-  // void launchAddFeedDialog(BuildContext context, FeedSourcesBloc feedBloc) {
   void launchAddFeedDialog(BuildContext context) {
+    if (!isLoggedIn()) {
+      showAuthDialog(context, "You must be logged in to add a personal feed.");
+      return;
+    }
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return Center(
           child: SingleChildScrollView(
             child: AddFeedSourceDialog(
-              // feedBloc: feedBloc,
               loadFeedByUrl: loadFeedByUrl,
             ),
           ),
@@ -73,7 +74,6 @@ class SettingsPage extends StatelessWidget {
               flex: 1,
               child: FeedSourcesContainer(
                 listTitle: "Personal Feed List",
-                // feedBloc: personalFeedBloc,
                 feedSourcesStream: feedSourcesStream,
                 deleteFeedSource: deleteFeedSource,
                 toggleFeedSource: toggleFeedSource,
@@ -83,12 +83,6 @@ class SettingsPage extends StatelessWidget {
           ],
         ),
       ),
-      // TODO: decide if floatingActionButton stays or we also want to manage the main feed
-      // floatingActionButton: FloatingActionButton(
-      //   onPressed: () {
-      //   },
-      //   child: const Icon(Icons.add),
-      // ),
     );
   }
 }
@@ -97,7 +91,6 @@ class FeedSourcesContainer extends StatelessWidget {
   const FeedSourcesContainer({
     super.key,
     required this.listTitle,
-    // required this.feedBloc,
 
     required this.feedSourcesStream,
     required this.deleteFeedSource,
@@ -111,7 +104,6 @@ class FeedSourcesContainer extends StatelessWidget {
   final Future<void> Function(FeedSource) toggleFeedSource;
 
   final String listTitle;
-  // final FeedSourcesBloc feedBloc;
   final void Function() launchAddFeedDialog;
 
   @override
@@ -127,7 +119,6 @@ class FeedSourcesContainer extends StatelessWidget {
           Expanded(
             flex: 1,
             child: FeedSourceList(
-              // feedBloc: feedBloc,
               feedSourcesStream: feedSourcesStream,
               removeFeedSource: deleteFeedSource,
               toggleFeedSource: toggleFeedSource,
@@ -156,11 +147,9 @@ class FeedSourcesContainer extends StatelessWidget {
 class AddFeedSourceDialog extends StatefulWidget {
   const AddFeedSourceDialog({
     super.key,
-    // required this.feedBloc,
     required this.loadFeedByUrl,
   });
 
-  // final FeedSourcesBloc feedBloc;
   final Future<void> Function(String) loadFeedByUrl;
 
   @override
@@ -212,15 +201,7 @@ class _AddFeedSourceDialogState extends State<AddFeedSourceDialog> {
     return AlertDialog(
       title: const Text('Add New Feed Source'),
       content: loading
-          ? const Column(
-              children: [
-                Padding(
-                  padding: EdgeInsets.all(8.0),
-                  child: Text("Loading..."),
-                ),
-                CircularProgressIndicator.adaptive(),
-              ],
-            )
+          ? const LoadingIndicator() 
           : TextField(
               controller: _textController,
               decoration: InputDecoration(
@@ -274,7 +255,6 @@ class FeedSourceListTitle extends StatelessWidget {
 class FeedSourceList extends StatelessWidget {
   const FeedSourceList({
     super.key,
-    // required this.feedBloc,
     required this.feedSourcesStream,
     required this.removeFeedSource,
     required this.toggleFeedSource,
@@ -293,7 +273,6 @@ class FeedSourceList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<FeedSourcesEvent>(
-      // stream: feedBloc.sourcesStream,
       stream: feedSourcesStream,
       builder: (context, snapshot) {
         if (snapshot.hasError) {
@@ -342,7 +321,7 @@ class FeedSourceListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      leading: FeedAvatar(image: feedSource.image),
+      leading: FeedAvatar(imageUrl: feedSource.iconUrl),
       title: Text(
         feedSource.title,
         overflow: TextOverflow.ellipsis,

@@ -2,21 +2,28 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_readrss/presentation/ui/components/avatars.dart';
-import 'package:flutter_readrss/use_case/model/feed_item.dart';
+import 'package:flutter_readrss/presentation/ui/components/utils.dart';
+import 'package:flutter_readrss/use_case/feeds/model/feed_item.dart';
 import 'package:flutter_readrss/presentation/ui/styles/styles.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../const/screen_route.dart';
-
 
 class FeedCard extends StatefulWidget {
   const FeedCard({
     super.key,
     required this.feedItem,
     required this.toggleBookmarked,
+    required this.toggleLiked,
+    required this.increaseViewCount,
+    required this.isLoggedIn,
   });
 
   final FeedItem feedItem;
   final void Function() toggleBookmarked;
+  final void Function() toggleLiked;
+  final void Function() increaseViewCount;
+  final bool Function() isLoggedIn;
 
   @override
   State<FeedCard> createState() => _FeedCardState();
@@ -24,24 +31,41 @@ class FeedCard extends StatefulWidget {
 
 class _FeedCardState extends State<FeedCard> {
   var _expanded = false;
-  var _liked = false;
 
   void toggleExpanded() {
     setState(() => _expanded = !_expanded);
   }
 
   void toggleBookmarked() {
+    if (!widget.isLoggedIn()) {
+      showAuthDialog(context, "You must be logged in to bookmark an item");
+    }
     setState(() {
       widget.toggleBookmarked();
     });
   }
 
   void toggleLiked() {
-    // TODO: call liking service
-    setState(() => _liked = !_liked);
+    if (!widget.isLoggedIn()) {
+      showAuthDialog(context, "You must be logged in to like an item.");
+    }
+    setState(() {
+      widget.toggleLiked();
+    });
+  }
+
+  void shareFeedItem() async {
+    try {
+      final uri = Uri.parse(widget.feedItem.articleUrl);
+      await Share.shareUri(uri);
+    } catch (e) {
+      log("[UI] FeedCard: error while trying to share feed item", error: e);
+      snackbarMessage(context, "Error while trying to share...");
+    }
   }
 
   void navigateToWebViewPage() {
+    widget.increaseViewCount();
     log("navigating to the article's web page");
     Navigator.of(context).pushNamed(
       ScreenRoute.webview.route,
@@ -67,9 +91,9 @@ class _FeedCardState extends State<FeedCard> {
             FeedCardBody(
               feedItem: widget.feedItem,
               expanded: _expanded,
-              liked: _liked,
               toggleLiked: toggleLiked,
               openUrlInWebView: navigateToWebViewPage,
+              shareFeedItem: shareFeedItem,
             ),
           ],
         ),
@@ -103,7 +127,7 @@ class FeedCardHeader extends StatelessWidget {
             flex: 2,
             child: Row(
               children: [
-                FeedAvatar(image: feedItem.sourceIcon),
+                FeedAvatar(imageUrl: feedItem.sourceIconUrl),
                 const SizedBox(width: 12),
                 Expanded(
                   flex: 4,
@@ -156,16 +180,16 @@ class FeedCardBody extends StatelessWidget {
     super.key,
     required this.feedItem,
     required this.expanded,
-    required this.liked,
     required this.toggleLiked,
     required this.openUrlInWebView,
+    required this.shareFeedItem,
   });
 
   final FeedItem feedItem;
   final bool expanded;
-  final bool liked;
   final void Function() toggleLiked;
   final void Function() openUrlInWebView;
+  final void Function() shareFeedItem;
 
   @override
   Widget build(BuildContext context) {
@@ -193,8 +217,8 @@ class FeedCardBody extends StatelessWidget {
               padding: const EdgeInsets.only(top: 12.0),
               child: FeedCardBodyExpandedSection(
                 feedItem: feedItem,
-                liked: liked,
                 toggleLiked: toggleLiked,
+                shareFeedItem: shareFeedItem,
               ),
             ),
           if (feedItem.pubDate != null)
@@ -221,13 +245,13 @@ class FeedCardBodyExpandedSection extends StatelessWidget {
   const FeedCardBodyExpandedSection({
     super.key,
     required this.feedItem,
-    required this.liked,
     required this.toggleLiked,
+    required this.shareFeedItem,
   });
 
   final FeedItem feedItem;
-  final bool liked;
   final void Function() toggleLiked;
+  final void Function() shareFeedItem;
 
   bool feedItemHasDescription() {
     return feedItem.description != null && feedItem.description!.isNotEmpty;
@@ -256,23 +280,36 @@ class FeedCardBodyExpandedSection extends StatelessWidget {
                   .bodySmall
                   ?.copyWith(color: colors(context).secondary),
             ),
-            TextButton.icon(
-              icon: Icon(
-                liked ? Icons.thumb_up : Icons.thumb_up_outlined,
-                color: colors(context).primary,
-              ),
-              label: Text(
-                "${feedItem.likes}",
-                style: textTheme(context).bodyMedium?.copyWith(
+            Row(
+              children: [
+                IconButton.filledTonal(
+                  onPressed: shareFeedItem,
+                  icon: Icon(
+                    Icons.share,
                     color: colors(context).primary,
-                    fontWeight: FontWeight.bold),
-              ),
-              onPressed: toggleLiked,
-              style: TextButton.styleFrom(
-                backgroundColor:
-                    colors(context).primary.withOpacity(liked ? 0.1 : 0.08),
-                foregroundColor: colors(context).primary,
-              ),
+                  ),
+                ),
+                const SizedBox(width: 8,),
+                TextButton.icon(
+                  icon: Icon(
+                    feedItem.liked ? Icons.thumb_up : Icons.thumb_up_outlined,
+                    color: colors(context).primary,
+                  ),
+                  label: Text(
+                    "${feedItem.likes}",
+                    style: textTheme(context).bodyMedium?.copyWith(
+                        color: colors(context).primary,
+                        fontWeight: FontWeight.bold),
+                  ),
+                  onPressed: toggleLiked,
+                  style: TextButton.styleFrom(
+                    backgroundColor: colors(context)
+                        .primary
+                        .withOpacity(feedItem.liked ? 0.1 : 0.08),
+                    foregroundColor: colors(context).primary,
+                  ),
+                ),
+              ],
             )
           ],
         )

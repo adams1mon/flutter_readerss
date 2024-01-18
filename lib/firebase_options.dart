@@ -17,7 +17,10 @@ import 'package:flutter/foundation.dart'
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
-      return web;
+      throw UnsupportedError(
+        'DefaultFirebaseOptions have not been configured for web - '
+        'you can reconfigure this by running the FlutterFire CLI again.',
+      );
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
@@ -43,38 +46,29 @@ class DefaultFirebaseOptions {
     }
   }
 
-  static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyCA1lcmMeS_GOlRh07ku5EZitsPagV_JIU',
-    appId: '1:233453377047:web:7e6d9022a59767f083ee52',
-    messagingSenderId: '233453377047',
-    projectId: 'readrss-88285',
-    authDomain: 'readrss-88285.firebaseapp.com',
-    storageBucket: 'readrss-88285.appspot.com',
-  );
-
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyBEBM0FYNy0bATs8l-m7BHfpMtoy_zlwfQ',
-    appId: '1:233453377047:android:c0d99985e0f341f983ee52',
-    messagingSenderId: '233453377047',
-    projectId: 'readrss-88285',
-    storageBucket: 'readrss-88285.appspot.com',
+    apiKey: 'AIzaSyDbWNxklAEtMj7-2avXsx5A94MwOPKlmQw',
+    appId: '1:685835080260:android:0744152b731f9bcd8fe211',
+    messagingSenderId: '685835080260',
+    projectId: 'flutter-readrss',
+    storageBucket: 'flutter-readrss.appspot.com',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyAuXMM-pESP-hvqE3QjkD0TeNl37dfK4zM',
-    appId: '1:233453377047:ios:7bbcdd5019ace4a183ee52',
-    messagingSenderId: '233453377047',
-    projectId: 'readrss-88285',
-    storageBucket: 'readrss-88285.appspot.com',
+    apiKey: 'AIzaSyBN7GttX-4LpU59CNKtCszj994qhaI2_Ok',
+    appId: '1:685835080260:ios:e9b9fd19da3c0b8e8fe211',
+    messagingSenderId: '685835080260',
+    projectId: 'flutter-readrss',
+    storageBucket: 'flutter-readrss.appspot.com',
     iosBundleId: 'com.example.flutterReadrss',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyAuXMM-pESP-hvqE3QjkD0TeNl37dfK4zM',
-    appId: '1:233453377047:ios:f5042b7655214e4b83ee52',
-    messagingSenderId: '233453377047',
-    projectId: 'readrss-88285',
-    storageBucket: 'readrss-88285.appspot.com',
+    apiKey: 'AIzaSyBN7GttX-4LpU59CNKtCszj994qhaI2_Ok',
+    appId: '1:685835080260:ios:11908ca8f12f4f398fe211',
+    messagingSenderId: '685835080260',
+    projectId: 'flutter-readrss',
+    storageBucket: 'flutter-readrss.appspot.com',
     iosBundleId: 'com.example.flutterReadrss.RunnerTests',
   );
 }
