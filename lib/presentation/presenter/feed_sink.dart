@@ -4,7 +4,9 @@ import 'package:flutter_readrss/use_case/feeds/model/feed_source.dart';
 // called by the presenter
 abstract class FeedSourceSink {
   void setFeedSource(FeedSource feedSource);
+  void setFeedSources(List<FeedSource> feedSources);
   void removeFeedSource(FeedSource feedSource);
+  void removeFeedSources();
 }
 
 abstract class FeedItemsSink {

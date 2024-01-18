@@ -29,3 +29,12 @@ void showAuthDialog(BuildContext context, String message) {
       },
     );
 }
+
+void snackbarMessage(BuildContext context, String message) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(message),
+    ),
+  );
+}
+

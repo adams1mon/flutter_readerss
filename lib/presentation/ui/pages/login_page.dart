@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_readrss/presentation/ui/components/utils.dart';
 import 'package:flutter_readrss/presentation/ui/styles/styles.dart';
 import 'package:flutter_readrss/use_case/exceptions/use_case_exception.dart';
 
@@ -10,8 +11,7 @@ class LoginPage extends StatelessWidget {
     required this.guestLogin,
   }) : super(key: key);
 
-  final Future<void> Function(String email, String password)
-      register;
+  final Future<void> Function(String email, String password) register;
   final Future<void> Function(String email, String password) login;
   final void Function() guestLogin;
 
@@ -36,8 +36,7 @@ class MainContainer extends StatelessWidget {
     required this.guestLogin,
   }) : super(key: key);
 
-  final Future<void> Function(String email, String password)
-      register;
+  final Future<void> Function(String email, String password) register;
   final Future<void> Function(String email, String password) login;
   final void Function() guestLogin;
 
@@ -69,8 +68,7 @@ class MainContent extends StatelessWidget {
     required this.guestLogin,
   }) : super(key: key);
 
-  final Future<void> Function(String email, String password)
-      register;
+  final Future<void> Function(String email, String password) register;
   final Future<void> Function(String email, String password) login;
   final void Function() guestLogin;
 
@@ -118,8 +116,7 @@ class AuthForm extends StatefulWidget {
     required this.guestLogin,
   }) : super(key: key);
 
-  final Future<void> Function(String email, String password)
-      register;
+  final Future<void> Function(String email, String password) register;
   final Future<void> Function(String email, String password) login;
   final void Function() guestLogin;
 
@@ -144,9 +141,10 @@ class AuthFormState extends State<AuthForm> {
       try {
         await widget.login(emailController.text, passwordController.text);
       } on UseCaseException catch (e) {
-        _snackbarMessage(e.message ?? "Login failed. Check your credentials");
+        snackbarMessage(
+            context, e.message ?? "Login failed. Check your credentials");
       } catch (e) {
-        _snackbarMessage('Login failed. Check your credentials');
+        snackbarMessage(context, 'Login failed. Check your credentials');
       }
     }
   }
@@ -156,21 +154,15 @@ class AuthFormState extends State<AuthForm> {
       try {
         await widget.register(emailController.text, passwordController.text);
       } on UseCaseException catch (e) {
-        _snackbarMessage(e.message ??
-            "Registration failed. Try a different email or password.");
+        snackbarMessage(
+            context,
+            e.message ??
+                "Registration failed. Try a different email or password.");
       } catch (e) {
-        _snackbarMessage(
-            'Registration failed. Try a different email or password.');
+        snackbarMessage(
+            context, 'Registration failed. Try a different email or password.');
       }
     }
-  }
-
-  void _snackbarMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-      ),
-    );
   }
 
   @override

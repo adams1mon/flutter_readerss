@@ -47,9 +47,25 @@ class FeedConnector
   }
 
   @override
+  void setFeedSources(List<FeedSource> sources) {
+    log("FeedProvider: adding feed sources");
+    for (final source in sources) {
+      _feedSources[source.rssUrl] = source;
+    }
+    _publishFeedSources(_feedSources);
+  }
+
+  @override
   void removeFeedSource(FeedSource source) {
     log("FeedProvider: removing feed source ${source.title}");
     _feedSources.remove(source.rssUrl);
+    _publishFeedSources(_feedSources);
+  }
+
+  @override
+  void removeFeedSources() {
+    log("FeedProvider: removing all feed sources");
+    _feedSources.clear();
     _publishFeedSources(_feedSources);
   }
 

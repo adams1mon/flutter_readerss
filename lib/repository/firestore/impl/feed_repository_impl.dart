@@ -126,8 +126,10 @@ class FeedRepositoryImpl implements FeedRepository {
       final itemDoc = await firestore
           .collection(feedItemsCollection)
           .doc(personalItemModel.feedItemId)
+          // .doc(doc.id)
           .get();
 
+      // TODO: this gets thrown for some reason...
       if (!itemDoc.exists) throw Exception("item doesn't exist...");
 
       final commonModel = FeedItemRepoModel.fromFirebaseDoc(itemDoc);

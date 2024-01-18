@@ -41,6 +41,10 @@ class FeedUseCasesImpl implements FeedUseCases {
     log("loading predefined urls: $mainFeedRssUrls");
 
     final user = _authUseCases.getUser();
+
+    final feedSources = <FeedSource>[];
+    final feedItems = <FeedItem>[];
+
     for (final url in mainFeedRssUrls) {
       // 1. fetch feed and its items + their views and likes
       try {
@@ -53,17 +57,20 @@ class FeedUseCasesImpl implements FeedUseCases {
           FeedType.predefined,
         );
 
-        // 2. if the user is logged in, fetch personal item details (liked, bookmarked)
-        final feedItems = await _getFeedItemDetails(
-            feedItemRepoModels, user, FeedType.predefined);
+        feedSources.add(feedSource);
 
-        _feedPresenter.setFeedSource(feedSource);
-        _feedPresenter.setFeedItems(feedItems);
+        // 2. if the user is logged in, fetch personal item details (liked, bookmarked)
+        feedItems.addAll(await _getFeedItemDetails(
+            feedItemRepoModels, user, FeedType.predefined));
       } catch (e) {
         log("error while fetching predefined feed from url $url", error: e);
         throw UseCaseException("Error while loading main feeds");
       }
     }
+
+    // 3. present all feeds to the user
+    _feedPresenter.setFeedSources(feedSources);
+    _feedPresenter.setFeedItems(feedItems);
   }
 
   // loading personal feeds flow
@@ -83,6 +90,8 @@ class FeedUseCasesImpl implements FeedUseCases {
       return;
     }
 
+    final feedSources = <FeedSource>[];
+    final feedItems = <FeedItem>[];
     try {
       // 1. fetch personal feeds and details (feed enabled), their items + their views and likes
       final personalFeeds = await _feedRepository.getPersonalFeeds(user.uid);
@@ -99,15 +108,18 @@ class FeedUseCasesImpl implements FeedUseCases {
         );
         log("setting personal feed source ${feedSource.rssUrl}");
 
-        _feedPresenter.setFeedSource(feedSource);
+        feedSources.add(feedSource);
 
         // 2. fetch personal item details (liked, bookmarked)
         if (feedSource.enabled) {
-          final feedItems = await _getFeedItemDetails(
-              feedItemRepoModels, user, FeedType.personal);
-          _feedPresenter.setFeedItems(feedItems);
+          feedItems.addAll(await _getFeedItemDetails(
+              feedItemRepoModels, user, FeedType.personal));
         }
       }
+
+      // 3. present all feeds to the user
+      _feedPresenter.setFeedSources(feedSources);
+      _feedPresenter.setFeedItems(feedItems);
     } catch (e) {
       log("error while fetching personal feeds");
       throw UseCaseException("Error while loading personal feeds");
@@ -116,13 +128,12 @@ class FeedUseCasesImpl implements FeedUseCases {
 
   @override
   Future<void> loadBookmarkedFeedItems() async {
-    log("loading bookmarked feed items");
-
     final user = _authUseCases.getUser();
     if (user == null) {
       log("User must be logged in to load their personal feeds");
       return;
     }
+    log("loading bookmarked feed items");
 
     final bookmarkedFeedItems =
         await _feedRepository.fetchBookmarkedFeedItems(user.uid);
@@ -291,6 +302,21 @@ class FeedUseCasesImpl implements FeedUseCases {
       // only save the item if there is a reason to
       if (item.liked || item.bookmarked) {
         await _feedRepository.saveFeedItemDetails(user.uid, itemDetails);
+
+        // TODO: this should really be handled by the repo layer...
+        // save common part of the item if the personal part also must be saved 
+        final repoModel = FeedItemRepoModel(
+          feedSourceTitle: item.feedSourceTitle,
+          feedSourceRssUrl: item.feedSourceRssUrl,
+          title: item.title,
+          description: item.description,
+          articleUrl: item.articleUrl,
+          sourceIconUrl: item.sourceIconUrl,
+          pubDate: item.pubDate,
+          views: item.views,
+          likes: item.likes,
+        );
+        await _feedRepository.saveFeedItem(repoModel);
       } else {
         await _feedRepository.deleteFeedItemDetails(user.uid, itemDetails);
       }

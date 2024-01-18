@@ -5,6 +5,7 @@ import 'package:flutter_readrss/presentation/ui/components/avatars.dart';
 import 'package:flutter_readrss/presentation/ui/components/utils.dart';
 import 'package:flutter_readrss/use_case/feeds/model/feed_item.dart';
 import 'package:flutter_readrss/presentation/ui/styles/styles.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../const/screen_route.dart';
 
@@ -53,6 +54,16 @@ class _FeedCardState extends State<FeedCard> {
     });
   }
 
+  void shareFeedItem() async {
+    try {
+      final uri = Uri.parse(widget.feedItem.articleUrl);
+      await Share.shareUri(uri);
+    } catch (e) {
+      log("[UI] FeedCard: error while trying to share feed item", error: e);
+      snackbarMessage(context, "Error while trying to share...");
+    }
+  }
+
   void navigateToWebViewPage() {
     widget.increaseViewCount();
     log("navigating to the article's web page");
@@ -64,7 +75,6 @@ class _FeedCardState extends State<FeedCard> {
 
   @override
   Widget build(BuildContext context) {
-
     return Card(
       elevation: 2,
       child: Padding(
@@ -83,6 +93,7 @@ class _FeedCardState extends State<FeedCard> {
               expanded: _expanded,
               toggleLiked: toggleLiked,
               openUrlInWebView: navigateToWebViewPage,
+              shareFeedItem: shareFeedItem,
             ),
           ],
         ),
@@ -171,12 +182,14 @@ class FeedCardBody extends StatelessWidget {
     required this.expanded,
     required this.toggleLiked,
     required this.openUrlInWebView,
+    required this.shareFeedItem,
   });
 
   final FeedItem feedItem;
   final bool expanded;
   final void Function() toggleLiked;
   final void Function() openUrlInWebView;
+  final void Function() shareFeedItem;
 
   @override
   Widget build(BuildContext context) {
@@ -205,6 +218,7 @@ class FeedCardBody extends StatelessWidget {
               child: FeedCardBodyExpandedSection(
                 feedItem: feedItem,
                 toggleLiked: toggleLiked,
+                shareFeedItem: shareFeedItem,
               ),
             ),
           if (feedItem.pubDate != null)
@@ -232,10 +246,12 @@ class FeedCardBodyExpandedSection extends StatelessWidget {
     super.key,
     required this.feedItem,
     required this.toggleLiked,
+    required this.shareFeedItem,
   });
 
   final FeedItem feedItem;
   final void Function() toggleLiked;
+  final void Function() shareFeedItem;
 
   bool feedItemHasDescription() {
     return feedItem.description != null && feedItem.description!.isNotEmpty;
@@ -264,23 +280,36 @@ class FeedCardBodyExpandedSection extends StatelessWidget {
                   .bodySmall
                   ?.copyWith(color: colors(context).secondary),
             ),
-            TextButton.icon(
-              icon: Icon(
-                feedItem.liked ? Icons.thumb_up : Icons.thumb_up_outlined,
-                color: colors(context).primary,
-              ),
-              label: Text(
-                "${feedItem.likes}",
-                style: textTheme(context).bodyMedium?.copyWith(
+            Row(
+              children: [
+                IconButton.filledTonal(
+                  onPressed: shareFeedItem,
+                  icon: Icon(
+                    Icons.share,
                     color: colors(context).primary,
-                    fontWeight: FontWeight.bold),
-              ),
-              onPressed: toggleLiked,
-              style: TextButton.styleFrom(
-                backgroundColor:
-                    colors(context).primary.withOpacity(feedItem.liked ? 0.1 : 0.08),
-                foregroundColor: colors(context).primary,
-              ),
+                  ),
+                ),
+                const SizedBox(width: 8,),
+                TextButton.icon(
+                  icon: Icon(
+                    feedItem.liked ? Icons.thumb_up : Icons.thumb_up_outlined,
+                    color: colors(context).primary,
+                  ),
+                  label: Text(
+                    "${feedItem.likes}",
+                    style: textTheme(context).bodyMedium?.copyWith(
+                        color: colors(context).primary,
+                        fontWeight: FontWeight.bold),
+                  ),
+                  onPressed: toggleLiked,
+                  style: TextButton.styleFrom(
+                    backgroundColor: colors(context)
+                        .primary
+                        .withOpacity(feedItem.liked ? 0.1 : 0.08),
+                    foregroundColor: colors(context).primary,
+                  ),
+                ),
+              ],
             )
           ],
         )

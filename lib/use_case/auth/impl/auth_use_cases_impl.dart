@@ -106,8 +106,7 @@ class AuthUseCasesImpl implements AuthUseCases {
     await FirebaseAuth.instance.signOut();
     _user = null;
     _authEvents.add(AuthEvent(type: AuthEventType.signOut, user: null));
-    _feedPresenter.deletePersonalFeedItems();
-    _feedPresenter.deleteBookmarkedFeedItems();
+    _feedPresenter.clearAllFeeds(); 
   }
 
   @override
@@ -118,7 +117,6 @@ class AuthUseCasesImpl implements AuthUseCases {
     await _user?.delete();
     _user = null;
     _authEvents.add(AuthEvent(type: AuthEventType.delete, user: _user));
-    _feedPresenter.deletePersonalFeedItems();
-    _feedPresenter.deleteBookmarkedFeedItems();
+    _feedPresenter.clearAllFeeds();
   }
 }

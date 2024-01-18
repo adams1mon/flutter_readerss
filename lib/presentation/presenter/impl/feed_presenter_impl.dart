@@ -5,6 +5,7 @@ import 'package:flutter_readrss/use_case/feeds/model/feed_item.dart';
 import 'package:flutter_readrss/use_case/feeds/model/feed_source.dart';
 import 'package:flutter_readrss/use_case/feeds/model/feed_type.dart';
 
+// TODO: use separate presenters instead of FeedType field in feed sources and items
 
 // distributes feeds and items based on their types (predefined, personal)
 class FeedPresenterImpl implements FeedPresenter {
@@ -34,6 +35,14 @@ class FeedPresenterImpl implements FeedPresenter {
       case FeedType.personal:
         _personalFeedSourceSink.setFeedSource(feedSource);
     }
+  }
+
+  @override
+  void setFeedSources(List<FeedSource> feedSources) {
+    log("FeedPresenter: setting feed sources");
+    // don't publish predefined feed sources, they aren't shown anywhere in the UI
+    final personal = feedSources.where((source) => source.type == FeedType.personal).toList();
+    _personalFeedSourceSink.setFeedSources(personal);
   }
 
   @override
@@ -95,15 +104,13 @@ class FeedPresenterImpl implements FeedPresenter {
     _bookmarkFeedItemsSink.setFeedItems(feedItems);
   }
 
-  @override 
-  void deletePersonalFeedItems() {
-    log("FeedPresenter: deleting personal feed items");
-    _personalFeedItemsSink.removeFeedItems();
-  }
-
   @override
-  void deleteBookmarkedFeedItems() {
-    log("FeedPresenter: deleting bookmarked feed items");
+  void clearAllFeeds() {
+    log("FeedPresenter: clearing all feed sources and feed items");
+    _mainFeedItemsSink.removeFeedItems();
+    _personalFeedSourceSink.removeFeedSources();
+    _personalFeedItemsSink.removeFeedItems();
     _bookmarkFeedItemsSink.removeFeedItems();
   }
+  
 }

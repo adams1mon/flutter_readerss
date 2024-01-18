@@ -29,9 +29,20 @@ class ContainerPage extends StatefulWidget {
 }
 
 class _ContainerPageState extends State<ContainerPage> {
-  @override
-  void initState() {
-    super.initState();
+  // @override
+  // void initState() {
+  //   super.initState();
+  //   feedUseCases.loadPredefinedFeeds();
+    
+  //   if (isLoggedIn()) {
+  //     feedUseCases.loadPersonalFeeds();
+  //     feedUseCases.loadBookmarkedFeedItems();
+  //   }
+  // }
+
+  bool isLoggedIn() => authUseCases.getUser() != null;
+
+  void initFeeds() {
     feedUseCases.loadPredefinedFeeds();
     
     if (isLoggedIn()) {
@@ -40,12 +51,10 @@ class _ContainerPageState extends State<ContainerPage> {
     }
   }
 
-  // TODO: personal feed still visible when signing out, then signing in as guest
-
-  bool isLoggedIn() => authUseCases.getUser() != null;
-
   @override
   Widget build(BuildContext context) {
+    initFeeds();
+
     return ChangeNotifierProvider(
       create: (context) => ReadrssBottomNavbarNotifier(),
       child: Consumer<ReadrssBottomNavbarNotifier>(
