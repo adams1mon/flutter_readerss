@@ -82,7 +82,7 @@ class FeedPresenterImpl implements FeedPresenter {
     log("FeedPresenter: removing feed items for source ${feedSource.title}");
     switch (feedSource.type) {
       case FeedType.predefined:
-        // predefined feeds cannot be controlled cannot be removed 
+        // predefined feeds cannot be removed 
         break;
       case FeedType.personal:
         _personalFeedItemsSink.removeFeedItemsForSource(feedSource.rssUrl);
@@ -93,5 +93,17 @@ class FeedPresenterImpl implements FeedPresenter {
   void setBookmarkedFeedItems(List<FeedItem> feedItems) {
     log("FeedPresenter: setting bookmarked feed items");
     _bookmarkFeedItemsSink.setFeedItems(feedItems);
+  }
+
+  @override 
+  void deletePersonalFeedItems() {
+    log("FeedPresenter: deleting personal feed items");
+    _personalFeedItemsSink.removeFeedItems();
+  }
+
+  @override
+  void deleteBookmarkedFeedItems() {
+    log("FeedPresenter: deleting bookmarked feed items");
+    _bookmarkFeedItemsSink.removeFeedItems();
   }
 }

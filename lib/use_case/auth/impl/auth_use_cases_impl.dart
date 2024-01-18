@@ -1,9 +1,9 @@
-
 import 'dart:async';
 import 'dart:developer';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_readrss/use_case/auth/user_repository.dart';
+import 'package:flutter_readrss/use_case/feeds/feed_presenter.dart';
 
 import '../auth_use_cases.dart';
 import '../../exceptions/use_case_exception.dart';
@@ -12,14 +12,15 @@ import '../../exceptions/use_case_exception.dart';
 /// wraps the Firebase auth state change events with our specific [AuthEvent] events,
 /// which other application can listen to.
 class AuthUseCasesImpl implements AuthUseCases {
-
   User? _user;
   final _authEvents = StreamController<AuthEvent>.broadcast();
   final UserRepository _userRepository;
+  final FeedPresenter _feedPresenter;
 
-  AuthUseCasesImpl({required userRepository}) : _userRepository = userRepository {
-    FirebaseAuth.instance.authStateChanges()
-    .listen((User? user) {
+  AuthUseCasesImpl({required userRepository, required feedPresenter})
+      : _userRepository = userRepository,
+        _feedPresenter = feedPresenter {
+    FirebaseAuth.instance.authStateChanges().listen((User? user) {
       _user = user;
       if (_user != null) {
         // fire a login event
@@ -51,7 +52,7 @@ class AuthUseCasesImpl implements AuthUseCases {
 
       log('sign in: $userCredential');
       _user = userCredential.user;
-      _authEvents.add(AuthEvent(type: AuthEventType.login,user: _user));
+      _authEvents.add(AuthEvent(type: AuthEventType.login, user: _user));
     } on FirebaseAuthException catch (e) {
       // TODO: do these when validating things locally, not by Firebase
       switch (e.code) {
@@ -70,9 +71,11 @@ class AuthUseCasesImpl implements AuthUseCases {
   }
 
   @override
-  Future<void> registerWithEmailAndPassword(String email, String password) async {
+  Future<void> registerWithEmailAndPassword(
+      String email, String password) async {
     try {
-      final userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      final userCredential =
+          await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
@@ -103,15 +106,19 @@ class AuthUseCasesImpl implements AuthUseCases {
     await FirebaseAuth.instance.signOut();
     _user = null;
     _authEvents.add(AuthEvent(type: AuthEventType.signOut, user: null));
+    _feedPresenter.deletePersonalFeedItems();
+    _feedPresenter.deleteBookmarkedFeedItems();
   }
 
   @override
   Future<void> deleteUser() async {
     if (_user == null) return;
-    
+
     await _userRepository.deleteUser(_user!.uid);
     await _user?.delete();
     _user = null;
     _authEvents.add(AuthEvent(type: AuthEventType.delete, user: _user));
+    _feedPresenter.deletePersonalFeedItems();
+    _feedPresenter.deleteBookmarkedFeedItems();
   }
 }

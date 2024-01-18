@@ -10,5 +10,6 @@ abstract class FeedSourceSink {
 abstract class FeedItemsSink {
   void setFeedItems(List<FeedItem> feedItems);
   void removeFeedItemsForSource(String rssUrl);
+  void removeFeedItems();
   void updateFeedItem(FeedItem feeditem);
 }

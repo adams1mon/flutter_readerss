@@ -37,7 +37,7 @@ class _FeedCardState extends State<FeedCard> {
 
   void toggleBookmarked() {
     if (!widget.isLoggedIn()) {
-      showAuthDialog(context, "You must be logged in to bookmark and item");
+      showAuthDialog(context, "You must be logged in to bookmark an item");
     }
     setState(() {
       widget.toggleBookmarked();
@@ -204,7 +204,6 @@ class FeedCardBody extends StatelessWidget {
               padding: const EdgeInsets.only(top: 12.0),
               child: FeedCardBodyExpandedSection(
                 feedItem: feedItem,
-                // liked: ,
                 toggleLiked: toggleLiked,
               ),
             ),
@@ -267,7 +266,6 @@ class FeedCardBodyExpandedSection extends StatelessWidget {
             ),
             TextButton.icon(
               icon: Icon(
-                // liked ? Icons.thumb_up : Icons.thumb_up_outlined,
                 feedItem.liked ? Icons.thumb_up : Icons.thumb_up_outlined,
                 color: colors(context).primary,
               ),

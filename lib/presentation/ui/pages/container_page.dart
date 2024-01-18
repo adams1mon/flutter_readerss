@@ -32,12 +32,17 @@ class _ContainerPageState extends State<ContainerPage> {
   @override
   void initState() {
     super.initState();
-    // TODO: finish testing this -> should be 
-    // initMainFeedWithMocks();
     feedUseCases.loadPredefinedFeeds();
-    feedUseCases.loadPersonalFeeds();
-    feedUseCases.loadBookmarkedFeedItems();
+    
+    if (isLoggedIn()) {
+      feedUseCases.loadPersonalFeeds();
+      feedUseCases.loadBookmarkedFeedItems();
+    }
   }
+
+  // TODO: personal feed still visible when signing out, then signing in as guest
+
+  bool isLoggedIn() => authUseCases.getUser() != null;
 
   @override
   Widget build(BuildContext context) {
@@ -53,7 +58,7 @@ class _ContainerPageState extends State<ContainerPage> {
               toggleBookmark: feedUseCases.toggleBookmarkFeedItem,
               toggleLike: feedUseCases.toggleLikeFeedItem,
               increaseViewCount: feedUseCases.viewFeedItem,
-              isLoggedIn: () => authUseCases.getUser() != null,
+              isLoggedIn: isLoggedIn,
             ),
             FeedPage(
               title: ScreenPage.personalFeed.title,
@@ -61,7 +66,7 @@ class _ContainerPageState extends State<ContainerPage> {
               toggleBookmark: feedUseCases.toggleBookmarkFeedItem,
               toggleLike: feedUseCases.toggleLikeFeedItem,
               increaseViewCount: feedUseCases.viewFeedItem,
-              isLoggedIn: () => authUseCases.getUser() != null,
+              isLoggedIn: isLoggedIn,
             ),
             FeedPage(
               title: ScreenPage.bookmarks.title,
@@ -69,7 +74,7 @@ class _ContainerPageState extends State<ContainerPage> {
               toggleBookmark: feedUseCases.toggleBookmarkFeedItem,
               toggleLike: feedUseCases.toggleLikeFeedItem,
               increaseViewCount: feedUseCases.viewFeedItem,
-              isLoggedIn: () => authUseCases.getUser() != null,
+              isLoggedIn: isLoggedIn,
               initialData: const FeedItemsEvent(feedItems: []),
               noItemsText: "Your bookmarked feed items will appear here.",
             ),
@@ -78,6 +83,7 @@ class _ContainerPageState extends State<ContainerPage> {
               loadFeedByUrl: feedUseCases.addPersonalFeedSourceByUrl,
               deleteFeedSource: feedUseCases.deleteFeedSource,
               toggleFeedSource: feedUseCases.toggleFeedSource,
+              isLoggedIn: isLoggedIn,
             ),
           ],
         ),

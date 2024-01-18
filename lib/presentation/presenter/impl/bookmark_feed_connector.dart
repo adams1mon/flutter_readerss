@@ -36,6 +36,12 @@ class BookmarkFeedItemsConnector implements FeedItemsSink, FeedItemsProvider {
   }
   
   @override
+  void removeFeedItems() {
+    _bookmarkedItems.clear();
+    _publishFeedItems(_bookmarkedItems);
+  }
+  
+  @override
   void updateFeedItem(FeedItem feedItem) {
     log("BookmarkFeedItemsConnector: updating feed item ${feedItem.articleUrl}");
     _bookmarkedItems[feedItem.articleUrl] = feedItem;

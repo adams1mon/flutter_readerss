@@ -5,6 +5,8 @@ import 'package:flutter_readrss/presentation/presenter/feed_events.dart';
 import 'package:flutter_readrss/presentation/ui/components/app_bar.dart';
 import 'package:flutter_readrss/presentation/ui/components/avatars.dart';
 import 'package:flutter_readrss/presentation/ui/components/help_text.dart';
+import 'package:flutter_readrss/presentation/ui/components/loading_indicator.dart';
+import 'package:flutter_readrss/presentation/ui/components/utils.dart';
 import 'package:flutter_readrss/use_case/exceptions/use_case_exception.dart';
 import 'package:flutter_readrss/use_case/feeds/model/feed_source.dart';
 import 'package:flutter_readrss/presentation/ui/styles/styles.dart';
@@ -21,6 +23,7 @@ class SettingsPage extends StatelessWidget {
     required this.loadFeedByUrl,
     required this.deleteFeedSource,
     required this.toggleFeedSource,
+    required this.isLoggedIn,
   });
 
   final Stream<FeedSourcesEvent> feedSourcesStream;
@@ -28,8 +31,14 @@ class SettingsPage extends StatelessWidget {
   final Future<void> Function(String) loadFeedByUrl;
   final Future<void> Function(FeedSource) deleteFeedSource;
   final Future<void> Function(FeedSource) toggleFeedSource;
+  final bool Function() isLoggedIn;
 
   void launchAddFeedDialog(BuildContext context) {
+    if (!isLoggedIn()) {
+      showAuthDialog(context, "You must be logged in to add a personal feed.");
+      return;
+    }
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -192,15 +201,7 @@ class _AddFeedSourceDialogState extends State<AddFeedSourceDialog> {
     return AlertDialog(
       title: const Text('Add New Feed Source'),
       content: loading
-          ? const Column(
-              children: [
-                Padding(
-                  padding: EdgeInsets.all(8.0),
-                  child: Text("Loading..."),
-                ),
-                CircularProgressIndicator.adaptive(),
-              ],
-            )
+          ? const LoadingIndicator() 
           : TextField(
               controller: _textController,
               decoration: InputDecoration(

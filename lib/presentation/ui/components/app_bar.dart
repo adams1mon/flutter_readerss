@@ -14,7 +14,7 @@ class ReadrssAppBar extends AppBar {
           actions: [
             Padding(
               padding: const EdgeInsets.only(right: 8.0),
-              child: authUseCases.getUser() != null
+              child: authUseCases.getUser() != null 
                   ? GestureDetector(
                       onTap: () => Navigator.pushNamed(
                         context,

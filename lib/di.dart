@@ -15,7 +15,6 @@ final mainFeedConnector = FeedConnector();
 final personalFeedConnector = FeedConnector();
 final bookmarksFeedItemsConnector = BookmarkFeedItemsConnector();
 
-
 final presenter = FeedPresenterImpl(
   mainFeedItemsSink: mainFeedConnector,
   personalFeedSourceSink: personalFeedConnector,
@@ -23,14 +22,16 @@ final presenter = FeedPresenterImpl(
   bookmarkFeedItemsSink: bookmarksFeedItemsConnector,
 );
 
-final authUseCases = AuthUseCasesImpl(userRepository: userReopsitory);
+final authUseCases = AuthUseCasesImpl(
+  userRepository: userReopsitory,
+  feedPresenter: presenter,
+);
 
 final feedUseCases = FeedUseCasesImpl(
   feedPresenter: presenter,
   feedRepository: feedRepository,
   authUseCases: authUseCases,
 );
-
 
 void globalCleanup() {
   mainFeedConnector.dispose();

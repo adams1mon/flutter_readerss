@@ -9,6 +9,8 @@ abstract class FeedPresenter {
   void setFeedItems(List<FeedItem> feedItems);
   void updateFeedItem(FeedItem feedItem);
   void deleteFeedItemsForSource(FeedSource feedSource);
+  void deletePersonalFeedItems();
 
   void setBookmarkedFeedItems(List<FeedItem> feedItems);
+  void deleteBookmarkedFeedItems();
 }

@@ -76,21 +76,11 @@ class FeedConnector
     _publishFeedItems(_feedItems);
   }
 
-  // @override
-  // void setFeedItems(String rssUrl, List<FeedItem> feedItems) {
-  //   if (feedItems.isEmpty) {
-  //     log("FeedProvider: adding EMPTY items for source $rssUrl");
-  //     _feedItems.remove(rssUrl);
-  //   } else {
-  //     log("FeedProvider: adding items for source $rssUrl");
-  //     _feedItems[rssUrl] = Map.fromEntries(
-  //       feedItems.map(
-  //         (e) => MapEntry<String, FeedItem>(e.articleUrl, e),
-  //       ),
-  //     );
-  //   }
-  //   _publishFeedItems(_feedItems);
-  // }
+  @override
+  void removeFeedItems() {
+    _feedItems.clear();
+    _publishFeedItems(_feedItems);
+  }
 
   @override
   void updateFeedItem(FeedItem feedItem) {

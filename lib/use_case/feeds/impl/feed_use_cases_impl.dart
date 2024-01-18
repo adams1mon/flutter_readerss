@@ -54,7 +54,8 @@ class FeedUseCasesImpl implements FeedUseCases {
         );
 
         // 2. if the user is logged in, fetch personal item details (liked, bookmarked)
-        final feedItems = await _getFeedItemDetails(feedItemRepoModels, user, FeedType.predefined);
+        final feedItems = await _getFeedItemDetails(
+            feedItemRepoModels, user, FeedType.predefined);
 
         _feedPresenter.setFeedSource(feedSource);
         _feedPresenter.setFeedItems(feedItems);
@@ -64,7 +65,6 @@ class FeedUseCasesImpl implements FeedUseCases {
       }
     }
   }
-
 
   // loading personal feeds flow
   // 1. fetch user's feeds
@@ -88,11 +88,9 @@ class FeedUseCasesImpl implements FeedUseCases {
       final personalFeeds = await _feedRepository.getPersonalFeeds(user.uid);
 
       for (final feedSourceDetails in personalFeeds) {
-
         // TODO: only fetch feed and its items if it's enabled - currently only the FeedSourceDetails are stored, and a FeedSource can't be constructed so it must be fetched
-        final (feedSourceRepoModel, feedItemRepoModels) =
-            await _feedRepository
-                .fetchFeedByUrl(feedSourceDetails.feedSourceUrl);
+        final (feedSourceRepoModel, feedItemRepoModels) = await _feedRepository
+            .fetchFeedByUrl(feedSourceDetails.feedSourceUrl);
 
         final feedSource = FeedSourceMapper.fromRepoModel(
           feedSourceRepoModel,
@@ -105,7 +103,8 @@ class FeedUseCasesImpl implements FeedUseCases {
 
         // 2. fetch personal item details (liked, bookmarked)
         if (feedSource.enabled) {
-          final feedItems = await _getFeedItemDetails(feedItemRepoModels, user, FeedType.personal);
+          final feedItems = await _getFeedItemDetails(
+              feedItemRepoModels, user, FeedType.personal);
           _feedPresenter.setFeedItems(feedItems);
         }
       }
@@ -159,9 +158,15 @@ class FeedUseCasesImpl implements FeedUseCases {
         FeedType.personal,
       );
 
+      // save the feed
+      final feedSourceDetails = FeedSourceDetails(
+          feedSourceUrl: feedSource.rssUrl, enabled: feedSource.enabled);
+      await _feedRepository.saveFeedSourceDetails(user.uid, feedSourceDetails);
+
       // 2. fetch personal item details (liked, bookmarked)
-      final feedItems = await _getFeedItemDetails(feedItemRepoModels, user, FeedType.personal);
-     
+      final feedItems = await _getFeedItemDetails(
+          feedItemRepoModels, user, FeedType.personal);
+
       _feedPresenter.setFeedSource(feedSource);
       _feedPresenter.setFeedItems(feedItems);
     } catch (e) {
@@ -201,7 +206,8 @@ class FeedUseCasesImpl implements FeedUseCases {
         );
 
         // 2. fetch personal item details (liked, bookmarked)
-        final feedItems = await _getFeedItemDetails(feedItemRepoModels, user, source.type);
+        final feedItems =
+            await _getFeedItemDetails(feedItemRepoModels, user, source.type);
 
         _feedPresenter.setFeedSource(feedSource);
         _feedPresenter.setFeedItems(feedItems);
@@ -214,7 +220,9 @@ class FeedUseCasesImpl implements FeedUseCases {
 
   // add user's details (liked, bookmarked) to a list of feed items
   Future<List<FeedItem>> _getFeedItemDetails(
-      List<FeedItemRepoModel> itemRepoModels, User? user, FeedType feedItemType) async {
+      List<FeedItemRepoModel> itemRepoModels,
+      User? user,
+      FeedType feedItemType) async {
     final itemList = <FeedItem>[];
 
     for (final repoModel in itemRepoModels) {

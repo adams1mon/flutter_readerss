@@ -4,6 +4,7 @@ import 'package:flutter_readrss/presentation/ui/components/app_bar.dart';
 import 'package:flutter_readrss/presentation/ui/components/bottom_navbar.dart';
 import 'package:flutter_readrss/presentation/ui/components/feed_card.dart';
 import 'package:flutter_readrss/presentation/ui/components/help_text.dart';
+import 'package:flutter_readrss/presentation/ui/components/loading_indicator.dart';
 import 'package:flutter_readrss/presentation/ui/pages/container_page.dart';
 import 'package:flutter_readrss/presentation/ui/styles/styles.dart';
 import 'package:flutter_readrss/use_case/feeds/model/feed_item.dart';
@@ -92,19 +93,7 @@ class FeedList extends StatelessWidget {
         if (snapshot.hasError) {
           return const Text("An unknown error occurred.");
         } else if (!snapshot.hasData) {
-          return const Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                "Loading...",
-                style: TextStyle(),
-              ),
-              SizedBox(
-                height: 25,
-              ),
-              CircularProgressIndicator(),
-            ],
-          );
+          return const LoadingIndicator(text: "Fetching feeds..."); 
         } else if (snapshot.data!.feedItems.isEmpty) {
           return HelpText(text: noItemsText);
         } else {
